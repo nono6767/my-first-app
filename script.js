@@ -125,6 +125,110 @@ const CONCERNS = [
   },
 ];
 
+// 姿勢タイプ（インストラクターの視診・触診による評価）と、おすすめエクササイズの対応表。
+const POSTURE_ASSESSMENTS = [
+  {
+    id: "kyphosis-lordosis",
+    label: "カイホロードシス（円背＋反り腰の複合型）",
+    exercises: [
+      { name: "チェストオープナー", note: "硬くなった大胸筋をゆるめ、丸まった胸まわりを開く" },
+      { name: "ペルビックカール", note: "腹筋・殿筋を使い、骨盤の前傾と反り腰を整える" },
+      { name: "キャットストレッチ", note: "胸椎の可動性を引き出し、背骨全体のバランスを整える" },
+    ],
+  },
+  {
+    id: "flat-back",
+    label: "フラットバック",
+    exercises: [
+      { name: "ハムストリングスストレッチ", note: "硬くなりやすいハムストリングスをゆるめ、骨盤の動きを取り戻す" },
+      { name: "ニーストレッチ", note: "弱くなりやすい腸腰筋を働かせ、骨盤を動かす感覚をつくる" },
+      { name: "バックエクステンション", note: "平坦になった腰椎のカーブを取り戻す" },
+    ],
+  },
+  {
+    id: "posture-sway-back",
+    label: "スウェイバック",
+    exercises: [
+      { name: "ペルビッククロック", note: "股関節が前に流れた骨盤の位置を、ニュートラルに戻す感覚を養う" },
+      { name: "ニーストレッチ", note: "腸腰筋を活性化し、股関節が前に突き出す姿勢を整える" },
+      { name: "スタンディングアライメントドリル", note: "壁を使い、耳・肩・骨盤・くるぶしのラインを揃える練習をする" },
+    ],
+  },
+  {
+    id: "forward-head",
+    label: "フォワードヘッド（頭部前方位）",
+    exercises: [
+      { name: "チンタック", note: "深層の頸部屈筋を働かせ、頭の位置を引き戻す" },
+      { name: "胸椎伸展ストレッチ", note: "丸まりやすい上部背中を伸ばし、頭が前に出る姿勢を整える" },
+      { name: "スワン", note: "僧帽筋下部を使いながら、頭〜背中のラインを整える" },
+    ],
+  },
+  {
+    id: "rounded-shoulders",
+    label: "巻き肩",
+    exercises: [
+      { name: "チェストオープナー", note: "硬くなった大胸筋・小胸筋をゆるめる" },
+      { name: "アームサークル（外旋方向）", note: "菱形筋・僧帽筋中部を使い、肩を正しい位置に引き戻す" },
+      { name: "スワン", note: "胸を開きながら肩甲骨まわりの筋肉を使う" },
+    ],
+  },
+  {
+    id: "posture-round-back",
+    label: "猫背",
+    exercises: [
+      { name: "スワン", note: "胸を開き、丸まった背中を伸ばす" },
+      { name: "チェストリフト", note: "正しい上体の起こし方を身につけ、猫背の癖を減らす" },
+      { name: "ロールアップ", note: "背骨を一節ずつ動かす感覚を養い、姿勢を整える" },
+    ],
+  },
+  {
+    id: "anterior-pelvic-tilt",
+    label: "骨盤前傾",
+    exercises: [
+      { name: "ペルビックカール", note: "腹筋・殿筋を使い、前に傾いた骨盤を戻す" },
+      { name: "腸腰筋ストレッチ", note: "骨盤を前に引っ張る腸腰筋の硬さをゆるめる" },
+      { name: "アブドミナルカール", note: "下部腹筋を使い、骨盤の傾きを安定させる" },
+    ],
+  },
+  {
+    id: "posterior-pelvic-tilt",
+    label: "骨盤後傾",
+    exercises: [
+      { name: "ハムストリングスストレッチ", note: "骨盤を後ろに引っ張るハムストリングスの硬さをゆるめる" },
+      { name: "ニーストレッチ", note: "弱くなりやすい腸腰筋を働かせる" },
+      { name: "バックエクステンション", note: "失われがちな腰のカーブを取り戻す" },
+    ],
+  },
+];
+
+// 左右の高さの違い（肩・骨盤）の対応表。
+// 「高い側」＝使いすぎ・過緊張の傾向、「低い側」＝機能低下・使えていない傾向として扱う。
+// exercises の side: "high"（高い側向け）/ "low"（低い側向け）/ "both"（両側・全体向け）
+const ASYMMETRY_ITEMS = [
+  {
+    id: "shoulder-asymmetry",
+    label: "肩の高さの左右差",
+    tightMuscle: "僧帽筋上部・肩甲挙筋",
+    weakMuscle: "僧帽筋下部・前鋸筋",
+    exercises: [
+      { name: "ネックストレッチ＋ロールダウン", note: "首の付け根〜肩の緊張をゆるめる", side: "high" },
+      { name: "アームサークル（下制方向）", note: "肩甲骨を下げて使う感覚を養う", side: "low" },
+      { name: "スワン", note: "鏡を見ながら左右の肩の高さを揃える意識で行う", side: "both" },
+    ],
+  },
+  {
+    id: "pelvis-asymmetry",
+    label: "骨盤の高さの左右差",
+    tightMuscle: "腰方形筋（QL）",
+    weakMuscle: "中殿筋",
+    exercises: [
+      { name: "サイドベンドストレッチ", note: "腰まわりの側面の緊張をゆるめる", side: "high" },
+      { name: "サイドキック／クラムシェル", note: "股関節を支える筋肉を働かせる", side: "low" },
+      { name: "ペルビッククロック", note: "骨盤の水平を意識しながら整える", side: "both" },
+    ],
+  },
+];
+
 const GENDERS = [
   { id: "male", label: "男性" },
   { id: "female", label: "女性" },
@@ -132,11 +236,14 @@ const GENDERS = [
 
 const genderListEl = document.getElementById("gender-list");
 const concernListEl = document.getElementById("concern-list");
+const postureListEl = document.getElementById("posture-list");
+const asymmetryGroupEl = document.getElementById("asymmetry-group");
 const formEl = document.getElementById("concern-form");
 const resultEl = document.getElementById("result");
 const resultContentEl = document.getElementById("result-content");
 
 let selectedGender = null;
+const asymmetrySelections = {};
 
 function matchesGender(item, gender) {
   return !item.genders || (gender && item.genders.includes(gender));
@@ -169,87 +276,234 @@ function renderGenderList() {
   });
 }
 
-function renderConcernList() {
+function renderCheckboxList(container, items, groupName) {
   const checkedBefore = new Set(
-    Array.from(formEl.querySelectorAll('input[name="concern"]:checked')).map(
+    Array.from(formEl.querySelectorAll(`input[name="${groupName}"]:checked`)).map(
       (input) => input.value
     )
   );
 
-  concernListEl.innerHTML = "";
+  container.innerHTML = "";
 
-  CONCERNS.filter((concern) => matchesGender(concern, selectedGender)).forEach(
-    (concern) => {
-      const chip = document.createElement("label");
-      chip.className = "chip";
+  items.forEach((item) => {
+    const chip = document.createElement("label");
+    chip.className = "chip";
 
-      const checkbox = document.createElement("input");
-      checkbox.type = "checkbox";
-      checkbox.name = "concern";
-      checkbox.value = concern.id;
-      checkbox.checked = checkedBefore.has(concern.id);
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.name = groupName;
+    checkbox.value = item.id;
+    checkbox.checked = checkedBefore.has(item.id);
 
-      const span = document.createElement("span");
-      span.textContent = concern.label;
+    const span = document.createElement("span");
+    span.textContent = item.label;
 
-      chip.appendChild(checkbox);
-      chip.appendChild(span);
-      concernListEl.appendChild(chip);
-    }
+    chip.appendChild(checkbox);
+    chip.appendChild(span);
+    container.appendChild(chip);
+  });
+}
+
+function renderConcernList() {
+  renderCheckboxList(
+    concernListEl,
+    CONCERNS.filter((concern) => matchesGender(concern, selectedGender)),
+    "concern"
   );
+}
+
+function renderPostureList() {
+  renderCheckboxList(postureListEl, POSTURE_ASSESSMENTS, "posture");
+}
+
+function renderAsymmetryGroup() {
+  asymmetryGroupEl.innerHTML = "";
+
+  ASYMMETRY_ITEMS.forEach((item) => {
+    const wrap = document.createElement("div");
+    wrap.className = "asymmetry-item";
+
+    const label = document.createElement("p");
+    label.className = "asymmetry-label";
+    label.textContent = item.label;
+    wrap.appendChild(label);
+
+    const toggle = document.createElement("div");
+    toggle.className = "side-toggle";
+
+    [
+      { side: "left", text: "左が高い" },
+      { side: "right", text: "右が高い" },
+    ].forEach(({ side, text }) => {
+      const btn = document.createElement("button");
+      btn.type = "button";
+      btn.className = "side-btn";
+      btn.textContent = text;
+      if (asymmetrySelections[item.id] === side) {
+        btn.classList.add("selected");
+      }
+      btn.addEventListener("click", () => {
+        asymmetrySelections[item.id] =
+          asymmetrySelections[item.id] === side ? null : side;
+        renderAsymmetryGroup();
+      });
+      toggle.appendChild(btn);
+    });
+
+    wrap.appendChild(toggle);
+    asymmetryGroupEl.appendChild(wrap);
+  });
 }
 
 renderGenderList();
 renderConcernList();
+renderPostureList();
+renderAsymmetryGroup();
+
+function buildConcernBlock(item) {
+  const block = document.createElement("div");
+  block.className = "concern-block";
+
+  const heading = document.createElement("h3");
+  heading.textContent = item.label;
+  block.appendChild(heading);
+
+  const list = document.createElement("ul");
+  item.exercises
+    .filter((exercise) => matchesGender(exercise, selectedGender))
+    .forEach((exercise) => {
+      const li = document.createElement("li");
+      const nameEl = document.createElement("span");
+      nameEl.className = "exercise-name";
+      nameEl.textContent = exercise.name;
+      const noteEl = document.createElement("span");
+      noteEl.className = "exercise-note";
+      noteEl.textContent = " — " + exercise.note;
+      li.appendChild(nameEl);
+      li.appendChild(noteEl);
+      list.appendChild(li);
+    });
+  block.appendChild(list);
+
+  return block;
+}
+
+function buildAsymmetryBlock(item, higherSide) {
+  const higherLabel = higherSide === "left" ? "左" : "右";
+  const lowerLabel = higherSide === "left" ? "右" : "左";
+
+  const block = document.createElement("div");
+  block.className = "concern-block";
+
+  const heading = document.createElement("h3");
+  heading.textContent = `${item.label}（${higherLabel}が高い）`;
+  block.appendChild(heading);
+
+  const tightRow = document.createElement("p");
+  tightRow.className = "muscle-row";
+  const tightTag = document.createElement("span");
+  tightTag.className = "tag tag-tight";
+  tightTag.textContent = "使いすぎ傾向";
+  tightRow.appendChild(tightTag);
+  tightRow.appendChild(
+    document.createTextNode(`${higherLabel}側：${item.tightMuscle}`)
+  );
+  block.appendChild(tightRow);
+
+  const weakRow = document.createElement("p");
+  weakRow.className = "muscle-row";
+  const weakTag = document.createElement("span");
+  weakTag.className = "tag tag-weak";
+  weakTag.textContent = "使えていない傾向";
+  weakRow.appendChild(weakTag);
+  weakRow.appendChild(
+    document.createTextNode(`${lowerLabel}側：${item.weakMuscle}`)
+  );
+  block.appendChild(weakRow);
+
+  const list = document.createElement("ul");
+  item.exercises.forEach((exercise) => {
+    const sideLabel =
+      exercise.side === "both"
+        ? "両側"
+        : exercise.side === "high"
+        ? higherLabel
+        : lowerLabel;
+
+    const li = document.createElement("li");
+    const nameEl = document.createElement("span");
+    nameEl.className = "exercise-name";
+    nameEl.textContent = `［${sideLabel}］${exercise.name}`;
+    const noteEl = document.createElement("span");
+    noteEl.className = "exercise-note";
+    noteEl.textContent = " — " + exercise.note;
+    li.appendChild(nameEl);
+    li.appendChild(noteEl);
+    list.appendChild(li);
+  });
+  block.appendChild(list);
+
+  return block;
+}
+
+function buildSectionHeading(text) {
+  const heading = document.createElement("h3");
+  heading.className = "section-heading";
+  heading.textContent = text;
+  return heading;
+}
 
 formEl.addEventListener("submit", (event) => {
   event.preventDefault();
 
-  const checkedIds = Array.from(
+  const checkedConcernIds = Array.from(
     formEl.querySelectorAll('input[name="concern"]:checked')
   ).map((input) => input.value);
 
+  const checkedPostureIds = Array.from(
+    formEl.querySelectorAll('input[name="posture"]:checked')
+  ).map((input) => input.value);
+
+  const asymmetryEntries = Object.entries(asymmetrySelections).filter(
+    ([, side]) => side
+  );
+
   resultContentEl.innerHTML = "";
 
-  if (checkedIds.length === 0) {
+  if (
+    checkedConcernIds.length === 0 &&
+    checkedPostureIds.length === 0 &&
+    asymmetryEntries.length === 0
+  ) {
     const message = document.createElement("p");
     message.className = "empty-message";
-    message.textContent = "悩みを1つ以上選んでください。";
+    message.textContent = "悩み・姿勢評価のいずれかを1つ以上選んでください。";
     resultContentEl.appendChild(message);
     resultEl.hidden = false;
     return;
   }
 
-  checkedIds.forEach((id) => {
-    const concern = CONCERNS.find((c) => c.id === id);
-    if (!concern) return;
+  if (checkedConcernIds.length > 0) {
+    resultContentEl.appendChild(buildSectionHeading("お悩みに対するご提案"));
+    checkedConcernIds.forEach((id) => {
+      const concern = CONCERNS.find((c) => c.id === id);
+      if (concern) resultContentEl.appendChild(buildConcernBlock(concern));
+    });
+  }
 
-    const block = document.createElement("div");
-    block.className = "concern-block";
-
-    const heading = document.createElement("h3");
-    heading.textContent = concern.label;
-    block.appendChild(heading);
-
-    const list = document.createElement("ul");
-    concern.exercises
-      .filter((exercise) => matchesGender(exercise, selectedGender))
-      .forEach((exercise) => {
-        const item = document.createElement("li");
-        const nameEl = document.createElement("span");
-        nameEl.className = "exercise-name";
-        nameEl.textContent = exercise.name;
-        const noteEl = document.createElement("span");
-        noteEl.className = "exercise-note";
-        noteEl.textContent = " — " + exercise.note;
-        item.appendChild(nameEl);
-        item.appendChild(noteEl);
-        list.appendChild(item);
-      });
-    block.appendChild(list);
-
-    resultContentEl.appendChild(block);
-  });
+  if (checkedPostureIds.length > 0 || asymmetryEntries.length > 0) {
+    resultContentEl.appendChild(
+      buildSectionHeading("姿勢評価に基づくご提案")
+    );
+    checkedPostureIds.forEach((id) => {
+      const posture = POSTURE_ASSESSMENTS.find((p) => p.id === id);
+      if (posture) resultContentEl.appendChild(buildConcernBlock(posture));
+    });
+    asymmetryEntries.forEach(([id, side]) => {
+      const item = ASYMMETRY_ITEMS.find((a) => a.id === id);
+      if (item) resultContentEl.appendChild(buildAsymmetryBlock(item, side));
+    });
+  }
 
   resultEl.hidden = false;
 });
