@@ -3,15 +3,26 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My First App</title>
+  <title>ピラティスレッスン提案アプリ</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <main>
-    <h1>Hello, my first app!</h1>
-    <p>ここから開発をはじめます。</p>
-    <button id="hello-button">クリックしてね</button>
-    <p id="message"></p>
+    <h1>ピラティスレッスン提案</h1>
+    <p class="lead">お客様の体の特徴・悩みを選ぶと、おすすめのレッスン内容を提示します。</p>
+
+    <form id="concern-form">
+      <fieldset>
+        <legend>体の特徴・悩み（複数選択できます）</legend>
+        <div id="concern-list" class="concern-list"></div>
+      </fieldset>
+      <button type="submit">レッスン内容を提案する</button>
+    </form>
+
+    <section id="result" class="result" hidden>
+      <h2>提案するレッスン内容</h2>
+      <div id="result-content"></div>
+    </section>
   </main>
   <script src="script.js"></script>
 </body>
