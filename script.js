@@ -751,6 +751,68 @@ function buildSectionHeading(text) {
   return heading;
 }
 
+// 選んだ項目すべての中から、複数の項目に共通して出てくるエクササイズを
+// 優先的にピックアップし、そのまま使えるレッスン表としてまとめる。
+function buildSummary(selectedItems, maxCount = 5) {
+  const summary = new Map();
+
+  selectedItems.forEach(({ label, exercises }) => {
+    exercises.forEach((exercise) => {
+      if (!summary.has(exercise.name)) {
+        summary.set(exercise.name, { name: exercise.name, count: 0, sources: [] });
+      }
+      const entry = summary.get(exercise.name);
+      entry.count += 1;
+      entry.sources.push(label);
+    });
+  });
+
+  return Array.from(summary.values())
+    .sort((a, b) => b.count - a.count)
+    .slice(0, maxCount);
+}
+
+function buildSummaryBlock(summaryEntries) {
+  const block = document.createElement("div");
+  block.className = "concern-block summary-block";
+
+  const eyebrow = document.createElement("p");
+  eyebrow.className = "summary-eyebrow";
+  eyebrow.textContent = "Lesson Summary";
+  block.appendChild(eyebrow);
+
+  const heading = document.createElement("h3");
+  heading.textContent = "レッスンまとめ";
+  block.appendChild(heading);
+
+  const helper = document.createElement("p");
+  helper.className = "helper-text";
+  helper.textContent =
+    "選んだ項目の中で重なりの多いエクササイズを中心に、上位" +
+    summaryEntries.length +
+    "つにまとめました。";
+  block.appendChild(helper);
+
+  const list = document.createElement("ol");
+  list.className = "summary-list";
+  summaryEntries.forEach((entry) => {
+    const li = document.createElement("li");
+    const nameEl = document.createElement("span");
+    nameEl.className = "exercise-name";
+    nameEl.textContent = entry.name;
+    const noteEl = document.createElement("span");
+    noteEl.className = "exercise-note";
+    const uniqueSources = Array.from(new Set(entry.sources));
+    noteEl.textContent = " — " + uniqueSources.join("・");
+    li.appendChild(nameEl);
+    li.appendChild(noteEl);
+    list.appendChild(li);
+  });
+  block.appendChild(list);
+
+  return block;
+}
+
 formEl.addEventListener("submit", (event) => {
   event.preventDefault();
 
@@ -786,11 +848,20 @@ formEl.addEventListener("submit", (event) => {
     return;
   }
 
+  const selectedItems = [];
+
   if (checkedConcernIds.length > 0) {
     resultContentEl.appendChild(buildSectionHeading("お悩みに対するご提案"));
     checkedConcernIds.forEach((id) => {
       const concern = CONCERNS.find((c) => c.id === id);
-      if (concern) resultContentEl.appendChild(buildConcernBlock(concern));
+      if (!concern) return;
+      resultContentEl.appendChild(buildConcernBlock(concern));
+      selectedItems.push({
+        label: concern.label,
+        exercises: concern.exercises.filter((exercise) =>
+          matchesGender(exercise, selectedGender)
+        ),
+      });
     });
   }
 
@@ -800,11 +871,19 @@ formEl.addEventListener("submit", (event) => {
     );
     checkedPostureIds.forEach((id) => {
       const posture = POSTURE_ASSESSMENTS.find((p) => p.id === id);
-      if (posture) resultContentEl.appendChild(buildConcernBlock(posture));
+      if (!posture) return;
+      resultContentEl.appendChild(buildConcernBlock(posture));
+      selectedItems.push({ label: posture.label, exercises: posture.exercises });
     });
     asymmetryEntries.forEach(([id, side]) => {
       const item = ASYMMETRY_ITEMS.find((a) => a.id === id);
-      if (item) resultContentEl.appendChild(buildAsymmetryBlock(item, side));
+      if (!item) return;
+      resultContentEl.appendChild(buildAsymmetryBlock(item, side));
+      const higherLabel = sideLabelFor("high", side);
+      selectedItems.push({
+        label: `${item.label}（${higherLabel}が高い）`,
+        exercises: item.exercises,
+      });
     });
   }
 
@@ -814,8 +893,16 @@ formEl.addEventListener("submit", (event) => {
     );
     checkedSportIds.forEach((id) => {
       const sport = SPORTS.find((s) => s.id === id);
-      if (sport) resultContentEl.appendChild(buildConcernBlock(sport));
+      if (!sport) return;
+      resultContentEl.appendChild(buildConcernBlock(sport));
+      selectedItems.push({ label: sport.label, exercises: sport.exercises });
     });
+  }
+
+  const summaryEntries = buildSummary(selectedItems, 5);
+  if (summaryEntries.length > 0) {
+    resultContentEl.appendChild(buildSectionHeading("まとめ"));
+    resultContentEl.appendChild(buildSummaryBlock(summaryEntries));
   }
 
   resultEl.hidden = false;
