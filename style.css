@@ -269,43 +269,23 @@ legend {
   fill: none;
 }
 
-.posture-diagram .head {
-  fill: none;
-  stroke: var(--diagram-neutral);
-  stroke-width: 2;
+.posture-diagram .part {
+  fill: var(--diagram-neutral);
+  stroke: none;
 }
 
-.posture-diagram .spine {
-  fill: none;
-  stroke: var(--diagram-neutral);
-  stroke-width: 2.5;
-  stroke-linecap: round;
+.posture-diagram .part.highlight {
+  fill: var(--diagram-highlight);
 }
 
-.posture-diagram .marker {
-  stroke: var(--diagram-neutral);
-  stroke-width: 3;
-  stroke-linecap: round;
+.posture-card:has(input:checked) .posture-diagram .part,
+.posture-card:has(input:checked) .posture-diagram .part.highlight {
+  fill: var(--accent-ink);
 }
 
-.posture-diagram .leg {
-  stroke: var(--diagram-neutral);
-  stroke-width: 2;
-  stroke-linecap: round;
-}
-
-.posture-diagram .highlight {
-  stroke: var(--diagram-highlight);
-  stroke-width: 3;
-}
-
-.posture-card:has(input:checked) .posture-diagram .plumb,
-.posture-card:has(input:checked) .posture-diagram .head,
-.posture-card:has(input:checked) .posture-diagram .spine,
-.posture-card:has(input:checked) .posture-diagram .marker,
-.posture-card:has(input:checked) .posture-diagram .leg,
-.posture-card:has(input:checked) .posture-diagram .highlight {
+.posture-card:has(input:checked) .posture-diagram .plumb {
   stroke: var(--accent-ink);
+  opacity: 0.6;
 }
 
 .asymmetry-group {

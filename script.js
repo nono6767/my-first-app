@@ -125,66 +125,89 @@ const CONCERNS = [
   },
 ];
 
-// 姿勢の側面シルエット図（横から見たイメージ）。共通パーツ：
-// plumb = 基準の垂直線 / head = 頭 / spine = 背骨のライン / marker = 肩・骨盤の傾き
-// leg = 脚 / highlight（アクセントカラー）= そのタイプの特徴的な部分
+// 姿勢の側面シルエット図（横から見た人型イメージ）。共通パーツ：
+// plumb = 基準の垂直線 / head・neck・torso・pelvis・shoulder-cap・leg = 体の各パーツ（塗りつぶし）
+// highlight（アクセントカラーで塗りつぶし）= そのタイプの特徴的な部分
+const POSTURE_PLUMB = '<line x1="41" y1="4" x2="41" y2="136" class="plumb"/>';
+const POSTURE_LEG = '<path d="M45,96 L47,128 L51,133 L37,133 L33,128 L35,96 Z" class="part"/>';
+const POSTURE_HEAD_NEUTRAL = '<circle cx="42" cy="15" r="8" class="part"/>';
+const POSTURE_NECK_NEUTRAL = '<path d="M38,22 L46,22 L48,29 L36,29 Z" class="part"/>';
+const POSTURE_TORSO_NEUTRAL =
+  '<path d="M50,30 C52,40 52,48 50,54 C48,60 48,68 47,78 L37,78 C35,68 35,60 34,54 C33,48 33,40 33,30 Z" class="part"/>';
+const POSTURE_PELVIS_NEUTRAL =
+  '<rect x="31" y="78" width="20" height="18" rx="7" class="part"/>';
+
 const POSTURE_DIAGRAMS = {
   "kyphosis-lordosis": `<svg viewBox="0 0 80 140" class="posture-diagram">
-    <line x1="40" y1="6" x2="40" y2="130" class="plumb"/>
-    <circle cx="46" cy="16" r="7" class="head highlight"/>
-    <path d="M46,23 C32,38 32,55 40,64 C50,72 50,85 42,95" class="spine highlight"/>
-    <line x1="34" y1="95" x2="50" y2="90" class="marker"/>
-    <line x1="42" y1="95" x2="38" y2="130" class="leg"/>
+    ${POSTURE_PLUMB}
+    ${POSTURE_LEG}
+    ${POSTURE_PELVIS_NEUTRAL}
+    <path d="M50,30 C52,40 52,48 50,54 C54,62 56,70 54,78 L38,78 C36,70 34,62 32,54 C26,48 24,40 28,30 Z" class="part highlight"/>
+    ${POSTURE_NECK_NEUTRAL}
+    ${POSTURE_HEAD_NEUTRAL}
   </svg>`,
   "flat-back": `<svg viewBox="0 0 80 140" class="posture-diagram">
-    <line x1="40" y1="6" x2="40" y2="130" class="plumb"/>
-    <circle cx="40" cy="16" r="7" class="head"/>
-    <path d="M40,23 C39,45 39,65 40,75 C41,85 41,90 40,95" class="spine highlight"/>
-    <line x1="32" y1="97" x2="48" y2="95" class="marker"/>
-    <line x1="40" y1="95" x2="38" y2="130" class="leg"/>
+    ${POSTURE_PLUMB}
+    ${POSTURE_LEG}
+    ${POSTURE_PELVIS_NEUTRAL}
+    <path d="M48,30 C48,42 48,52 47,58 C46,66 46,74 45,78 L37,78 C37,74 37,66 36,58 C35,52 35,42 35,30 Z" class="part highlight"/>
+    ${POSTURE_NECK_NEUTRAL}
+    ${POSTURE_HEAD_NEUTRAL}
   </svg>`,
   "posture-sway-back": `<svg viewBox="0 0 80 140" class="posture-diagram">
-    <line x1="40" y1="6" x2="40" y2="130" class="plumb"/>
-    <circle cx="42" cy="16" r="7" class="head"/>
-    <path d="M42,23 C30,40 30,56 38,64 C46,72 48,84 48,95" class="spine highlight"/>
-    <line x1="40" y1="95" x2="56" y2="93" class="marker highlight"/>
-    <line x1="48" y1="95" x2="38" y2="130" class="leg"/>
+    ${POSTURE_PLUMB}
+    <path d="M54,96 L47,128 L51,133 L37,133 L33,128 L44,96 Z" class="part"/>
+    <g transform="translate(9,0)"><rect x="31" y="78" width="20" height="18" rx="7" class="part highlight"/></g>
+    <path d="M50,30 C51,42 51,52 49,58 C48,66 47,74 46,78 L36,78 C35,72 30,64 28,54 C26,46 28,38 32,30 Z" class="part highlight"/>
+    ${POSTURE_NECK_NEUTRAL}
+    ${POSTURE_HEAD_NEUTRAL}
   </svg>`,
   "forward-head": `<svg viewBox="0 0 80 140" class="posture-diagram">
-    <line x1="40" y1="6" x2="40" y2="130" class="plumb"/>
-    <circle cx="54" cy="16" r="7" class="head highlight"/>
-    <path d="M54,23 C46,32 40,42 40,55" class="spine highlight"/>
-    <path d="M40,55 C39,68 39,82 40,95" class="spine"/>
-    <line x1="34" y1="95" x2="46" y2="95" class="marker"/>
-    <line x1="40" y1="95" x2="38" y2="130" class="leg"/>
+    ${POSTURE_PLUMB}
+    ${POSTURE_LEG}
+    ${POSTURE_PELVIS_NEUTRAL}
+    ${POSTURE_TORSO_NEUTRAL}
+    <path d="M53,21 L61,23 L52,30 L36,30 Z" class="part highlight"/>
+    <circle cx="57" cy="14" r="8" class="part highlight"/>
   </svg>`,
   "rounded-shoulders": `<svg viewBox="0 0 80 140" class="posture-diagram">
-    <line x1="40" y1="6" x2="40" y2="130" class="plumb"/>
-    <circle cx="40" cy="16" r="7" class="head"/>
-    <path d="M40,23 C39,45 39,65 40,75 C40,85 40,90 40,95" class="spine"/>
-    <line x1="40" y1="30" x2="53" y2="35" class="marker highlight"/>
-    <line x1="40" y1="95" x2="38" y2="130" class="leg"/>
+    ${POSTURE_PLUMB}
+    ${POSTURE_LEG}
+    ${POSTURE_PELVIS_NEUTRAL}
+    ${POSTURE_TORSO_NEUTRAL}
+    ${POSTURE_NECK_NEUTRAL}
+    ${POSTURE_HEAD_NEUTRAL}
+    <ellipse cx="50" cy="32" rx="8" ry="7" class="part highlight"/>
   </svg>`,
   "posture-round-back": `<svg viewBox="0 0 80 140" class="posture-diagram">
-    <line x1="40" y1="6" x2="40" y2="130" class="plumb"/>
-    <circle cx="44" cy="16" r="7" class="head"/>
-    <path d="M44,23 C32,38 32,54 40,64 C40,76 40,86 40,95" class="spine highlight"/>
-    <line x1="34" y1="95" x2="46" y2="95" class="marker"/>
-    <line x1="40" y1="95" x2="38" y2="130" class="leg"/>
+    ${POSTURE_PLUMB}
+    ${POSTURE_LEG}
+    ${POSTURE_PELVIS_NEUTRAL}
+    <path d="M50,30 C52,40 52,48 50,54 C48,60 48,68 47,78 L37,78 C35,68 32,60 28,52 C24,44 26,36 30,30 Z" class="part highlight"/>
+    ${POSTURE_NECK_NEUTRAL}
+    ${POSTURE_HEAD_NEUTRAL}
   </svg>`,
   "anterior-pelvic-tilt": `<svg viewBox="0 0 80 140" class="posture-diagram">
-    <line x1="40" y1="6" x2="40" y2="130" class="plumb"/>
-    <circle cx="40" cy="16" r="7" class="head"/>
-    <path d="M40,23 C39,42 39,60 40,70 C45,78 45,88 40,95" class="spine"/>
-    <line x1="30" y1="90" x2="50" y2="99" class="marker highlight"/>
-    <line x1="40" y1="95" x2="38" y2="130" class="leg"/>
+    ${POSTURE_PLUMB}
+    ${POSTURE_LEG}
+    <g transform="rotate(22 41 87)">
+      <rect x="31" y="80" width="20" height="14" rx="4" class="part highlight"/>
+      <rect x="48" y="83" width="7" height="8" rx="2" class="part highlight"/>
+    </g>
+    ${POSTURE_TORSO_NEUTRAL}
+    ${POSTURE_NECK_NEUTRAL}
+    ${POSTURE_HEAD_NEUTRAL}
   </svg>`,
   "posterior-pelvic-tilt": `<svg viewBox="0 0 80 140" class="posture-diagram">
-    <line x1="40" y1="6" x2="40" y2="130" class="plumb"/>
-    <circle cx="40" cy="16" r="7" class="head"/>
-    <path d="M40,23 C39,42 39,60 38,70 C35,78 35,88 38,95" class="spine"/>
-    <line x1="30" y1="99" x2="50" y2="90" class="marker highlight"/>
-    <line x1="38" y1="95" x2="38" y2="130" class="leg"/>
+    ${POSTURE_PLUMB}
+    ${POSTURE_LEG}
+    <g transform="rotate(-22 41 87)">
+      <rect x="31" y="80" width="20" height="14" rx="4" class="part highlight"/>
+      <rect x="48" y="83" width="7" height="8" rx="2" class="part highlight"/>
+    </g>
+    ${POSTURE_TORSO_NEUTRAL}
+    ${POSTURE_NECK_NEUTRAL}
+    ${POSTURE_HEAD_NEUTRAL}
   </svg>`,
 };
 
