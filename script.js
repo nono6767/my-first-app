@@ -1108,8 +1108,22 @@ const photoState = {
   points: null,
   facingSign: 1,
   dragKey: null,
-  lastCheckedId: null,
+  lastCheckedIds: [],
 };
+
+// 「体幹の全体パターン」は、4つの中から一番近いもの1つだけを選ぶ（互いに排他的）。
+// 「頭部・肩まわりの所見」は、それとは別に独立して判定し、当てはまれば追加でチェックする
+// （体幹パターンと同時に成立してよい。例：カイホロードシス＋フォワードヘッド）。
+const POSTURE_BODY_TYPE_IDS = [
+  "kyphosis-lordosis",
+  "flat-back",
+  "posture-sway-back",
+  "posture-round-back",
+];
+const POSTURE_REGIONAL_FINDINGS = [
+  { id: "forward-head", key: "earDx", threshold: 5 },
+  { id: "rounded-shoulders", key: "shoulderDx", threshold: 4 },
+];
 
 function pickVisibleSide(landmarks) {
   const leftIdx = [
@@ -1177,23 +1191,35 @@ function computeOffsets(points, facingSign) {
   };
 }
 
-function matchPostureType(offsets) {
-  const candidates = Object.entries(POSTURE_DIAGRAM_PARAMS).map(([id, params]) => ({
-    id,
-    distance: Math.hypot(
-      (params.earDx || 0) - offsets.earDx,
-      (params.shoulderDx || 0) - offsets.shoulderDx,
-      (params.hipDx || 0) - offsets.hipDx,
-      (params.kneeDx || 0) - offsets.kneeDx
-    ),
-  }));
-  // 「特に偏りなし」もひとつの候補として比較し、最も近ければ何もチェックしない。
+// 体幹の全体パターン（4つ）から、一番近いもの1つだけを選ぶ。
+// 「特に偏りなし」も候補に含め、それが一番近ければ何も選ばない。
+function matchBodyType(offsets) {
+  const candidates = POSTURE_BODY_TYPE_IDS.map((id) => {
+    const params = POSTURE_DIAGRAM_PARAMS[id];
+    return {
+      id,
+      distance: Math.hypot(
+        (params.earDx || 0) - offsets.earDx,
+        (params.shoulderDx || 0) - offsets.shoulderDx,
+        (params.hipDx || 0) - offsets.hipDx,
+        (params.kneeDx || 0) - offsets.kneeDx
+      ),
+    };
+  });
   candidates.push({
     id: null,
     distance: Math.hypot(offsets.earDx, offsets.shoulderDx, offsets.hipDx, offsets.kneeDx),
   });
   candidates.sort((a, b) => a.distance - b.distance);
   return candidates[0];
+}
+
+// 頭部前方位・巻き肩は、体幹パターンとは独立に、それぞれの目印となるズレが
+// 一定量を超えたら該当ありとする（複数同時に該当してよい）。
+function detectRegionalFindings(offsets) {
+  return POSTURE_REGIONAL_FINDINGS.filter(
+    (finding) => offsets[finding.key] >= finding.threshold
+  ).map((finding) => finding.id);
 }
 
 function redrawPhotoCanvas() {
@@ -1231,32 +1257,40 @@ function redrawPhotoCanvas() {
 
 function applyPostureMatch() {
   const offsets = computeOffsets(photoState.points, photoState.facingSign);
-  const match = matchPostureType(offsets);
+  const bodyMatch = matchBodyType(offsets);
+  const regionalIds = detectRegionalFindings(offsets);
+  const newCheckedIds = [
+    ...(bodyMatch.id ? [bodyMatch.id] : []),
+    ...regionalIds,
+  ];
 
-  if (photoState.lastCheckedId) {
-    const previousCheckbox = postureListEl.querySelector(
-      `input[value="${photoState.lastCheckedId}"]`
-    );
-    if (previousCheckbox && photoState.lastCheckedId !== match.id) {
-      previousCheckbox.checked = false;
-    }
-  }
+  // 前回自動でチェックした項目のうち、今回選ばれなかったものは外す。
+  photoState.lastCheckedIds.forEach((id) => {
+    if (newCheckedIds.includes(id)) return;
+    const previousCheckbox = postureListEl.querySelector(`input[value="${id}"]`);
+    if (previousCheckbox) previousCheckbox.checked = false;
+  });
 
-  if (!match.id) {
-    photoState.lastCheckedId = null;
+  newCheckedIds.forEach((id) => {
+    const checkbox = postureListEl.querySelector(`input[value="${id}"]`);
+    if (checkbox) checkbox.checked = true;
+  });
+  photoState.lastCheckedIds = newCheckedIds;
+
+  if (newCheckedIds.length === 0) {
     setPhotoStatus(
       "特に大きな姿勢の偏りは検出されませんでした。図と見比べて選んでください。"
     );
     return;
   }
 
-  const posture = POSTURE_ASSESSMENTS.find((p) => p.id === match.id);
-  const checkbox = postureListEl.querySelector(`input[value="${match.id}"]`);
-  if (checkbox) checkbox.checked = true;
-  photoState.lastCheckedId = match.id;
+  const labels = newCheckedIds.map((id) => {
+    const posture = POSTURE_ASSESSMENTS.find((p) => p.id === id);
+    return posture ? posture.label : id;
+  });
 
   setPhotoStatus(
-    `「${posture ? posture.label : match.id}」に近い姿勢と判定し、自動でチェックしました。点がずれていればドラッグで調整できます。`,
+    `「${labels.join("」「")}」に近い所見と判定し、自動でチェックしました。点がずれていればドラッグで調整できます。`,
     "match"
   );
 }
@@ -1327,7 +1361,7 @@ if (photoInput) {
     photoPreviewWrapEl.hidden = true;
     photoState.imageBitmap = null;
     photoState.points = null;
-    photoState.lastCheckedId = null;
+    photoState.lastCheckedIds = [];
     setPhotoStatus(
       "解析しています…（初回はAIモデルの読み込みのため時間がかかることがあります）"
     );
