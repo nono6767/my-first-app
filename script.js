@@ -125,6 +125,69 @@ const CONCERNS = [
   },
 ];
 
+// 姿勢の側面シルエット図（横から見たイメージ）。共通パーツ：
+// plumb = 基準の垂直線 / head = 頭 / spine = 背骨のライン / marker = 肩・骨盤の傾き
+// leg = 脚 / highlight（アクセントカラー）= そのタイプの特徴的な部分
+const POSTURE_DIAGRAMS = {
+  "kyphosis-lordosis": `<svg viewBox="0 0 80 140" class="posture-diagram">
+    <line x1="40" y1="6" x2="40" y2="130" class="plumb"/>
+    <circle cx="46" cy="16" r="7" class="head highlight"/>
+    <path d="M46,23 C32,38 32,55 40,64 C50,72 50,85 42,95" class="spine highlight"/>
+    <line x1="34" y1="95" x2="50" y2="90" class="marker"/>
+    <line x1="42" y1="95" x2="38" y2="130" class="leg"/>
+  </svg>`,
+  "flat-back": `<svg viewBox="0 0 80 140" class="posture-diagram">
+    <line x1="40" y1="6" x2="40" y2="130" class="plumb"/>
+    <circle cx="40" cy="16" r="7" class="head"/>
+    <path d="M40,23 C39,45 39,65 40,75 C41,85 41,90 40,95" class="spine highlight"/>
+    <line x1="32" y1="97" x2="48" y2="95" class="marker"/>
+    <line x1="40" y1="95" x2="38" y2="130" class="leg"/>
+  </svg>`,
+  "posture-sway-back": `<svg viewBox="0 0 80 140" class="posture-diagram">
+    <line x1="40" y1="6" x2="40" y2="130" class="plumb"/>
+    <circle cx="42" cy="16" r="7" class="head"/>
+    <path d="M42,23 C30,40 30,56 38,64 C46,72 48,84 48,95" class="spine highlight"/>
+    <line x1="40" y1="95" x2="56" y2="93" class="marker highlight"/>
+    <line x1="48" y1="95" x2="38" y2="130" class="leg"/>
+  </svg>`,
+  "forward-head": `<svg viewBox="0 0 80 140" class="posture-diagram">
+    <line x1="40" y1="6" x2="40" y2="130" class="plumb"/>
+    <circle cx="54" cy="16" r="7" class="head highlight"/>
+    <path d="M54,23 C46,32 40,42 40,55" class="spine highlight"/>
+    <path d="M40,55 C39,68 39,82 40,95" class="spine"/>
+    <line x1="34" y1="95" x2="46" y2="95" class="marker"/>
+    <line x1="40" y1="95" x2="38" y2="130" class="leg"/>
+  </svg>`,
+  "rounded-shoulders": `<svg viewBox="0 0 80 140" class="posture-diagram">
+    <line x1="40" y1="6" x2="40" y2="130" class="plumb"/>
+    <circle cx="40" cy="16" r="7" class="head"/>
+    <path d="M40,23 C39,45 39,65 40,75 C40,85 40,90 40,95" class="spine"/>
+    <line x1="40" y1="30" x2="53" y2="35" class="marker highlight"/>
+    <line x1="40" y1="95" x2="38" y2="130" class="leg"/>
+  </svg>`,
+  "posture-round-back": `<svg viewBox="0 0 80 140" class="posture-diagram">
+    <line x1="40" y1="6" x2="40" y2="130" class="plumb"/>
+    <circle cx="44" cy="16" r="7" class="head"/>
+    <path d="M44,23 C32,38 32,54 40,64 C40,76 40,86 40,95" class="spine highlight"/>
+    <line x1="34" y1="95" x2="46" y2="95" class="marker"/>
+    <line x1="40" y1="95" x2="38" y2="130" class="leg"/>
+  </svg>`,
+  "anterior-pelvic-tilt": `<svg viewBox="0 0 80 140" class="posture-diagram">
+    <line x1="40" y1="6" x2="40" y2="130" class="plumb"/>
+    <circle cx="40" cy="16" r="7" class="head"/>
+    <path d="M40,23 C39,42 39,60 40,70 C45,78 45,88 40,95" class="spine"/>
+    <line x1="30" y1="90" x2="50" y2="99" class="marker highlight"/>
+    <line x1="40" y1="95" x2="38" y2="130" class="leg"/>
+  </svg>`,
+  "posterior-pelvic-tilt": `<svg viewBox="0 0 80 140" class="posture-diagram">
+    <line x1="40" y1="6" x2="40" y2="130" class="plumb"/>
+    <circle cx="40" cy="16" r="7" class="head"/>
+    <path d="M40,23 C39,42 39,60 38,70 C35,78 35,88 38,95" class="spine"/>
+    <line x1="30" y1="99" x2="50" y2="90" class="marker highlight"/>
+    <line x1="38" y1="95" x2="38" y2="130" class="leg"/>
+  </svg>`,
+};
+
 // 姿勢タイプ（インストラクターの視診・触診による評価）と、おすすめエクササイズの対応表。
 const POSTURE_ASSESSMENTS = [
   {
@@ -591,7 +654,37 @@ function renderConcernList() {
 }
 
 function renderPostureList() {
-  renderCheckboxList(postureListEl, POSTURE_ASSESSMENTS, "posture");
+  const checkedBefore = new Set(
+    Array.from(formEl.querySelectorAll('input[name="posture"]:checked')).map(
+      (input) => input.value
+    )
+  );
+
+  postureListEl.innerHTML = "";
+
+  POSTURE_ASSESSMENTS.forEach((item) => {
+    const card = document.createElement("label");
+    card.className = "posture-card";
+
+    const checkbox = document.createElement("input");
+    checkbox.type = "checkbox";
+    checkbox.name = "posture";
+    checkbox.value = item.id;
+    checkbox.checked = checkedBefore.has(item.id);
+    card.appendChild(checkbox);
+
+    const figure = document.createElement("div");
+    figure.className = "posture-figure";
+    figure.innerHTML = POSTURE_DIAGRAMS[item.id] || "";
+    card.appendChild(figure);
+
+    const label = document.createElement("span");
+    label.className = "posture-label";
+    label.textContent = item.label;
+    card.appendChild(label);
+
+    postureListEl.appendChild(card);
+  });
 }
 
 function renderSportsList() {
