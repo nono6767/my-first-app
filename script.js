@@ -1121,8 +1121,8 @@ const POSTURE_BODY_TYPE_IDS = [
   "posture-round-back",
 ];
 const POSTURE_REGIONAL_FINDINGS = [
-  { id: "forward-head", key: "earDx", threshold: 5 },
-  { id: "rounded-shoulders", key: "shoulderDx", threshold: 4 },
+  { id: "forward-head", key: "earDx", threshold: 3 },
+  { id: "rounded-shoulders", key: "shoulderDx", threshold: 2.5 },
 ];
 
 function pickVisibleSide(landmarks) {
@@ -1191,27 +1191,52 @@ function computeOffsets(points, facingSign) {
   };
 }
 
-// 体幹の全体パターン（4つ）から、一番近いもの1つだけを選ぶ。
-// 「特に偏りなし」も候補に含め、それが一番近ければ何も選ばない。
+// 図解用のパラメータは分かりやすさのため大きめの数値にしてあるため、
+// 実際の写真から検出したズレ量（もっと控えめな値になりがち）とそのまま大きさ比較すると、
+// 数値の小さいタイプ（猫背や「偏りなし」）に寄ってしまう。
+// そこで「ズレの大きさ」ではなく「ズレの向き・パターン（比率）」が似ているかで比較する。
+function magnitude(vec) {
+  return Math.hypot(...vec);
+}
+
+function cosineSimilarity(a, b) {
+  const magA = magnitude(a);
+  const magB = magnitude(b);
+  if (magA === 0 || magB === 0) return 0;
+  const dot = a.reduce((sum, v, i) => sum + v * b[i], 0);
+  return dot / (magA * magB);
+}
+
+// これ未満のズレ量なら、向きに関わらず「特に偏りなし」とみなす。
+const BODY_TYPE_MIN_MAGNITUDE = 2.5;
+// 一番近い候補でもこれより向きが離れていれば、無理に当てはめず「特に偏りなし」にする。
+const BODY_TYPE_MIN_SIMILARITY = 0.3;
+
+// 体幹の全体パターン（4つ）から、向きが一番近いもの1つだけを選ぶ。
+// ズレが小さすぎる、またはどれとも向きが似ていない場合は何も選ばない。
 function matchBodyType(offsets) {
+  const offsetVec = [offsets.earDx, offsets.shoulderDx, offsets.hipDx, offsets.kneeDx];
+  if (magnitude(offsetVec) < BODY_TYPE_MIN_MAGNITUDE) {
+    return { id: null };
+  }
+
   const candidates = POSTURE_BODY_TYPE_IDS.map((id) => {
     const params = POSTURE_DIAGRAM_PARAMS[id];
-    return {
-      id,
-      distance: Math.hypot(
-        (params.earDx || 0) - offsets.earDx,
-        (params.shoulderDx || 0) - offsets.shoulderDx,
-        (params.hipDx || 0) - offsets.hipDx,
-        (params.kneeDx || 0) - offsets.kneeDx
-      ),
-    };
+    const paramVec = [
+      params.earDx || 0,
+      params.shoulderDx || 0,
+      params.hipDx || 0,
+      params.kneeDx || 0,
+    ];
+    return { id, similarity: cosineSimilarity(offsetVec, paramVec) };
   });
-  candidates.push({
-    id: null,
-    distance: Math.hypot(offsets.earDx, offsets.shoulderDx, offsets.hipDx, offsets.kneeDx),
-  });
-  candidates.sort((a, b) => a.distance - b.distance);
-  return candidates[0];
+  candidates.sort((a, b) => b.similarity - a.similarity);
+
+  const best = candidates[0];
+  if (!best || best.similarity < BODY_TYPE_MIN_SIMILARITY) {
+    return { id: null };
+  }
+  return best;
 }
 
 // 頭部前方位・巻き肩は、体幹パターンとは独立に、それぞれの目印となるズレが
