@@ -1417,6 +1417,74 @@ if (photoCanvasEl) {
   photoCanvasEl.addEventListener("pointercancel", endDrag);
 }
 
+// 顔まわり（頭）と足まわりのランドマーク番号（MediaPipe Poseの33点モデル）。
+const HEAD_LANDMARK_INDICES = [0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
+const FOOT_LANDMARK_INDICES = [27, 28, 29, 30, 31, 32];
+const ALL_LANDMARK_INDICES = Array.from({ length: 33 }, (_, i) => i);
+
+// ラフな1回目の検出結果から、頭〜足がぴったり収まる切り抜き範囲を計算する。
+// 人物が写真の中で小さい（遠い）ほど、この切り抜きで拡大される効果が大きくなる。
+function computeCropRect(landmarks, width, height) {
+  const toVisiblePixels = (idxs) =>
+    idxs
+      .map((i) => landmarks[i])
+      .filter((lm) => lm && (lm.visibility ?? 1) > 0.3)
+      .map((lm) => ({ x: lm.x * width, y: lm.y * height }));
+
+  const headPoints = toVisiblePixels(HEAD_LANDMARK_INDICES);
+  const footPoints = toVisiblePixels(FOOT_LANDMARK_INDICES);
+  const allPoints = toVisiblePixels(ALL_LANDMARK_INDICES);
+  if (headPoints.length === 0 || footPoints.length === 0 || allPoints.length === 0) {
+    return null;
+  }
+
+  const topY = Math.min(...headPoints.map((p) => p.y));
+  const bottomY = Math.max(...footPoints.map((p) => p.y));
+  const bodyHeight = Math.max(bottomY - topY, 1);
+
+  const minX = Math.min(...allPoints.map((p) => p.x));
+  const maxX = Math.max(...allPoints.map((p) => p.x));
+  const centerX = (minX + maxX) / 2;
+
+  // 頭上・足元に少し余白を残し、横方向も体が切れないよう余裕を持たせる。
+  const verticalPad = bodyHeight * 0.12;
+  const halfWidth = Math.max((maxX - minX) / 2 + bodyHeight * 0.15, bodyHeight * 0.22);
+
+  const cropTop = Math.max(topY - verticalPad, 0);
+  const cropBottom = Math.min(bottomY + verticalPad, height);
+  const cropLeft = Math.max(centerX - halfWidth, 0);
+  const cropRight = Math.min(centerX + halfWidth, width);
+
+  return {
+    x: cropLeft,
+    y: cropTop,
+    width: cropRight - cropLeft,
+    height: cropBottom - cropTop,
+  };
+}
+
+// 切り抜いた範囲を、十分な解像度になるまで拡大して新しいキャンバスに描く。
+function buildZoomedCanvas(source, cropRect) {
+  const targetHeight = Math.max(cropRect.height, 800);
+  const scale = targetHeight / cropRect.height;
+  const zoomed = document.createElement("canvas");
+  zoomed.width = Math.round(cropRect.width * scale);
+  zoomed.height = Math.round(cropRect.height * scale);
+  const ctx = zoomed.getContext("2d");
+  ctx.drawImage(
+    source,
+    cropRect.x,
+    cropRect.y,
+    cropRect.width,
+    cropRect.height,
+    0,
+    0,
+    zoomed.width,
+    zoomed.height
+  );
+  return zoomed;
+}
+
 if (photoInput) {
   photoInput.addEventListener("change", async () => {
     const file = photoInput.files && photoInput.files[0];
@@ -1431,17 +1499,16 @@ if (photoInput) {
     );
 
     try {
-      const imageBitmap = await createImageBitmap(file);
-      const canvas = photoCanvasEl;
-      canvas.width = imageBitmap.width;
-      canvas.height = imageBitmap.height;
-      const ctx = canvas.getContext("2d");
-      ctx.drawImage(imageBitmap, 0, 0);
+      const originalBitmap = await createImageBitmap(file);
+      const roughCanvas = document.createElement("canvas");
+      roughCanvas.width = originalBitmap.width;
+      roughCanvas.height = originalBitmap.height;
+      roughCanvas.getContext("2d").drawImage(originalBitmap, 0, 0);
 
       const landmarker = await loadPoseLandmarker();
-      const result = landmarker.detect(canvas);
+      const roughResult = landmarker.detect(roughCanvas);
 
-      if (!result.landmarks || result.landmarks.length === 0) {
+      if (!roughResult.landmarks || roughResult.landmarks.length === 0) {
         photoPreviewWrapEl.hidden = false;
         setPhotoStatus(
           "体を検出できませんでした。全身が写った横向きの写真でお試しください。",
@@ -1450,12 +1517,38 @@ if (photoInput) {
         return;
       }
 
+      // 1回目の検出結果から人物の範囲を割り出し、そこだけ拡大して検出し直すことで、
+      // 写真の中で人物が小さい（遠い）場合の精度を上げる。
+      let finalCanvas = roughCanvas;
+      let finalLandmarks = roughResult.landmarks[0];
+
+      const cropRect = computeCropRect(
+        roughResult.landmarks[0],
+        roughCanvas.width,
+        roughCanvas.height
+      );
+
+      if (cropRect && cropRect.width > 10 && cropRect.height > 10) {
+        setPhotoStatus("人物を検出しました。精度を上げるため拡大して再解析しています…");
+        const zoomedCanvas = buildZoomedCanvas(originalBitmap, cropRect);
+        const refinedResult = landmarker.detect(zoomedCanvas);
+        if (refinedResult.landmarks && refinedResult.landmarks.length > 0) {
+          finalCanvas = zoomedCanvas;
+          finalLandmarks = refinedResult.landmarks[0];
+        }
+      }
+
+      const finalBitmap = await createImageBitmap(finalCanvas);
+      const canvas = photoCanvasEl;
+      canvas.width = finalBitmap.width;
+      canvas.height = finalBitmap.height;
+
       const { points, facingSign } = detectPointsFromLandmarks(
-        result.landmarks[0],
+        finalLandmarks,
         canvas.width,
         canvas.height
       );
-      photoState.imageBitmap = imageBitmap;
+      photoState.imageBitmap = finalBitmap;
       photoState.points = points;
       photoState.facingSign = facingSign;
 
