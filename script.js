@@ -174,7 +174,7 @@ function buildPostureDiagram({
   const pelvisTransform = pelvisRotation
     ? ` transform="rotate(${pelvisRotation} ${hipX} ${hipCenterY})"`
     : "";
-  const pelvis = `<rect x="${hipX - 10}" y="${waistY}" width="20" height="18" rx="7" class="part"${pelvisTransform}/>`;
+  const pelvis = `<g${pelvisTransform}><rect x="${hipX - 10}" y="${waistY}" width="20" height="18" rx="7" class="part"/><line x1="${hipX - 9}" y1="${hipCenterY}" x2="${hipX + 9}" y2="${hipCenterY}" class="pelvis-line"/></g>`;
 
   const leg = `<path d="M${hipX + 7},${legTopY} L${kneeX + 4},${kneeY} L${ankleX + 3},${ankleY} L${ankleX + 5},${footY} L${ankleX - 5},${footY} L${ankleX - 3},${ankleY} L${kneeX - 4},${kneeY} L${hipX - 7},${legTopY} Z" class="part"/>`;
 

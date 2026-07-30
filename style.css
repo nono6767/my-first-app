@@ -279,12 +279,19 @@ legend {
   stroke-width: 1;
 }
 
+.posture-diagram .pelvis-line {
+  stroke: var(--plumb-mark);
+  stroke-width: 1.6;
+  stroke-linecap: round;
+}
+
 .posture-card:has(input:checked) .posture-diagram .part {
   fill: var(--accent-ink);
 }
 
 .posture-card:has(input:checked) .posture-diagram .plumb,
-.posture-card:has(input:checked) .posture-diagram .landmark {
+.posture-card:has(input:checked) .posture-diagram .landmark,
+.posture-card:has(input:checked) .posture-diagram .pelvis-line {
   stroke: var(--accent-ink);
 }
 
