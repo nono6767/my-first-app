@@ -125,91 +125,102 @@ const CONCERNS = [
   },
 ];
 
-// 姿勢の側面シルエット図（横から見た人型イメージ）。共通パーツ：
-// plumb = 基準の垂直線 / head・neck・torso・pelvis・shoulder-cap・leg = 体の各パーツ（塗りつぶし）
-// highlight（アクセントカラーで塗りつぶし）= そのタイプの特徴的な部分
-const POSTURE_PLUMB = '<line x1="41" y1="4" x2="41" y2="136" class="plumb"/>';
-const POSTURE_LEG = '<path d="M45,96 L47,128 L51,133 L37,133 L33,128 L35,96 Z" class="part"/>';
-const POSTURE_HEAD_NEUTRAL = '<circle cx="42" cy="15" r="8" class="part"/>';
-const POSTURE_NECK_NEUTRAL = '<path d="M38,22 L46,22 L48,29 L36,29 Z" class="part"/>';
-const POSTURE_TORSO_NEUTRAL =
-  '<path d="M50,30 C52,40 52,48 50,54 C48,60 48,68 47,78 L37,78 C35,68 35,60 34,54 C33,48 33,40 33,30 Z" class="part"/>';
-const POSTURE_PELVIS_NEUTRAL =
-  '<rect x="31" y="78" width="20" height="18" rx="7" class="part"/>';
+// 姿勢の側面シルエット図。基準の垂直線（plumb line）に対して、
+// 耳・肩峰・骨盤（大転子）・膝・くるぶしの5点がどれだけ前後にずれるかで
+// それぞれの姿勢タイプを表現する（実際の姿勢分析で使われる方法と同じ考え方）。
+//
+// params:
+//   earDx / shoulderDx / hipDx / kneeDx / ankleDx : 基準線からの前後のずれ（+で前方、-で後方）
+//   backBulge : 胸椎後弯（猫背）の強さ（値が大きいほど背中が後ろに丸まる）
+//   frontBulge : 腰椎前弯（反り腰）の強さ（値が大きいほど腰が前に反る。マイナスで平背方向）
+//   pelvisRotation : 骨盤ブロックの回転角度（骨盤前傾・後傾の表現用）
+function buildPostureDiagram({
+  earDx = 0,
+  shoulderDx = 0,
+  hipDx = 0,
+  kneeDx = 0,
+  ankleDx = 0,
+  backBulge = 0,
+  frontBulge = 0,
+  pelvisRotation = 0,
+} = {}) {
+  const plumbX = 41;
+  const earX = plumbX + earDx;
+  const shoulderX = plumbX + shoulderDx;
+  const hipX = plumbX + hipDx;
+  const kneeX = plumbX + kneeDx;
+  const ankleX = plumbX + ankleDx;
 
-const POSTURE_DIAGRAMS = {
-  "kyphosis-lordosis": `<svg viewBox="0 0 80 140" class="posture-diagram">
-    ${POSTURE_PLUMB}
-    ${POSTURE_LEG}
-    ${POSTURE_PELVIS_NEUTRAL}
-    <path d="M50,30 C52,40 52,48 50,54 C54,62 56,70 54,78 L38,78 C36,70 34,62 32,54 C26,48 24,40 28,30 Z" class="part highlight"/>
-    ${POSTURE_NECK_NEUTRAL}
-    ${POSTURE_HEAD_NEUTRAL}
-  </svg>`,
-  "flat-back": `<svg viewBox="0 0 80 140" class="posture-diagram">
-    ${POSTURE_PLUMB}
-    ${POSTURE_LEG}
-    ${POSTURE_PELVIS_NEUTRAL}
-    <path d="M48,30 C48,42 48,52 47,58 C46,66 46,74 45,78 L37,78 C37,74 37,66 36,58 C35,52 35,42 35,30 Z" class="part highlight"/>
-    ${POSTURE_NECK_NEUTRAL}
-    ${POSTURE_HEAD_NEUTRAL}
-  </svg>`,
-  "posture-sway-back": `<svg viewBox="0 0 80 140" class="posture-diagram">
-    ${POSTURE_PLUMB}
-    <path d="M54,96 L47,128 L51,133 L37,133 L33,128 L44,96 Z" class="part"/>
-    <g transform="translate(9,0)"><rect x="31" y="78" width="20" height="18" rx="7" class="part highlight"/></g>
-    <path d="M50,30 C51,42 51,52 49,58 C48,66 47,74 46,78 L36,78 C35,72 30,64 28,54 C26,46 28,38 32,30 Z" class="part highlight"/>
-    ${POSTURE_NECK_NEUTRAL}
-    ${POSTURE_HEAD_NEUTRAL}
-  </svg>`,
-  "forward-head": `<svg viewBox="0 0 80 140" class="posture-diagram">
-    ${POSTURE_PLUMB}
-    ${POSTURE_LEG}
-    ${POSTURE_PELVIS_NEUTRAL}
-    ${POSTURE_TORSO_NEUTRAL}
-    <path d="M53,21 L61,23 L52,30 L36,30 Z" class="part highlight"/>
-    <circle cx="57" cy="14" r="8" class="part highlight"/>
-  </svg>`,
-  "rounded-shoulders": `<svg viewBox="0 0 80 140" class="posture-diagram">
-    ${POSTURE_PLUMB}
-    ${POSTURE_LEG}
-    ${POSTURE_PELVIS_NEUTRAL}
-    ${POSTURE_TORSO_NEUTRAL}
-    ${POSTURE_NECK_NEUTRAL}
-    ${POSTURE_HEAD_NEUTRAL}
-    <ellipse cx="50" cy="32" rx="8" ry="7" class="part highlight"/>
-  </svg>`,
-  "posture-round-back": `<svg viewBox="0 0 80 140" class="posture-diagram">
-    ${POSTURE_PLUMB}
-    ${POSTURE_LEG}
-    ${POSTURE_PELVIS_NEUTRAL}
-    <path d="M50,30 C52,40 52,48 50,54 C48,60 48,68 47,78 L37,78 C35,68 32,60 28,52 C24,44 26,36 30,30 Z" class="part highlight"/>
-    ${POSTURE_NECK_NEUTRAL}
-    ${POSTURE_HEAD_NEUTRAL}
-  </svg>`,
-  "anterior-pelvic-tilt": `<svg viewBox="0 0 80 140" class="posture-diagram">
-    ${POSTURE_PLUMB}
-    ${POSTURE_LEG}
-    <g transform="rotate(22 41 87)">
-      <rect x="31" y="80" width="20" height="14" rx="4" class="part highlight"/>
-      <rect x="48" y="83" width="7" height="8" rx="2" class="part highlight"/>
-    </g>
-    ${POSTURE_TORSO_NEUTRAL}
-    ${POSTURE_NECK_NEUTRAL}
-    ${POSTURE_HEAD_NEUTRAL}
-  </svg>`,
-  "posterior-pelvic-tilt": `<svg viewBox="0 0 80 140" class="posture-diagram">
-    ${POSTURE_PLUMB}
-    ${POSTURE_LEG}
-    <g transform="rotate(-22 41 87)">
-      <rect x="31" y="80" width="20" height="14" rx="4" class="part highlight"/>
-      <rect x="48" y="83" width="7" height="8" rx="2" class="part highlight"/>
-    </g>
-    ${POSTURE_TORSO_NEUTRAL}
-    ${POSTURE_NECK_NEUTRAL}
-    ${POSTURE_HEAD_NEUTRAL}
-  </svg>`,
+  const shoulderY = 30;
+  const midY = 54;
+  const waistY = 78;
+  const hipCenterY = 87;
+  const legTopY = 96;
+  const kneeY = 112;
+  const ankleY = 128;
+  const footY = 133;
+
+  const frontTop = shoulderX + 8;
+  const backTop = shoulderX - 8;
+  const frontMid = (frontTop + (hipX + 8)) / 2;
+  const backMid = (backTop + (hipX - 8)) / 2 - backBulge;
+  const frontWaist = hipX + 8 + frontBulge;
+  const backWaist = hipX - 8;
+
+  const head = `<circle cx="${earX}" cy="14" r="8" class="part"/>`;
+  const neck = `<path d="M${earX - 4},22 L${earX + 4},22 L${frontTop},${shoulderY} L${backTop},${shoulderY} Z" class="part"/>`;
+  const torso = `<path d="M${frontTop},${shoulderY} C${frontTop},${shoulderY + 12} ${frontMid},${midY - 6} ${frontMid},${midY} C${frontMid},${midY + 12} ${frontWaist},${waistY - 10} ${frontWaist},${waistY} L${backWaist},${waistY} C${backWaist},${waistY - 10} ${backMid},${midY + 12} ${backMid},${midY} C${backMid},${midY - 6} ${backTop},${shoulderY + 12} ${backTop},${shoulderY} Z" class="part"/>`;
+
+  const pelvisTransform = pelvisRotation
+    ? ` transform="rotate(${pelvisRotation} ${hipX} ${hipCenterY})"`
+    : "";
+  const pelvis = `<rect x="${hipX - 10}" y="${waistY}" width="20" height="18" rx="7" class="part"${pelvisTransform}/>`;
+
+  const leg = `<path d="M${hipX + 7},${legTopY} L${kneeX + 4},${kneeY} L${ankleX + 3},${ankleY} L${ankleX + 5},${footY} L${ankleX - 5},${footY} L${ankleX - 3},${ankleY} L${kneeX - 4},${kneeY} L${hipX - 7},${legTopY} Z" class="part"/>`;
+
+  const plumb = `<line x1="${plumbX}" y1="6" x2="${plumbX}" y2="134" class="plumb"/>`;
+
+  const dot = (x, y) => `<circle cx="${x}" cy="${y}" r="2.6" class="landmark"/>`;
+  const landmarks =
+    dot(earX, 14) +
+    dot(shoulderX, shoulderY) +
+    dot(hipX, hipCenterY) +
+    dot(kneeX, kneeY) +
+    dot(ankleX, ankleY - 2);
+
+  return `<svg viewBox="0 0 82 140" class="posture-diagram">${leg}${pelvis}${torso}${neck}${head}${plumb}${landmarks}</svg>`;
+}
+
+const POSTURE_DIAGRAM_PARAMS = {
+  "kyphosis-lordosis": {
+    earDx: 9,
+    shoulderDx: 4,
+    hipDx: 1,
+    kneeDx: -3,
+    backBulge: 9,
+    frontBulge: 7,
+  },
+  "flat-back": { earDx: 3, shoulderDx: -1, hipDx: -4, kneeDx: -1 },
+  "posture-sway-back": {
+    earDx: 6,
+    shoulderDx: -5,
+    hipDx: 7,
+    kneeDx: -2,
+    backBulge: 8,
+  },
+  "forward-head": { earDx: 10, shoulderDx: 1 },
+  "rounded-shoulders": { earDx: 2, shoulderDx: 8, backBulge: 4 },
+  "posture-round-back": { earDx: 5, shoulderDx: 3, kneeDx: -1, backBulge: 8 },
+  "anterior-pelvic-tilt": { hipDx: 1, frontBulge: 6, pelvisRotation: 18 },
+  "posterior-pelvic-tilt": { hipDx: -1, frontBulge: -4, pelvisRotation: -18 },
 };
+
+const POSTURE_DIAGRAMS = Object.fromEntries(
+  Object.entries(POSTURE_DIAGRAM_PARAMS).map(([id, params]) => [
+    id,
+    buildPostureDiagram(params),
+  ])
+);
 
 // 姿勢タイプ（インストラクターの視診・触診による評価）と、おすすめエクササイズの対応表。
 const POSTURE_ASSESSMENTS = [

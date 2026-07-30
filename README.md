@@ -20,4 +20,8 @@
 - `ASYMMETRY_ITEMS` は「肩・骨盤の高さの左右差」専用の一覧です。高い側を選ぶと `tightMuscles`（使いすぎ傾向の筋肉）・`weakMuscles`（使えていない傾向の筋肉、複数指定可）と、`side: "high"/"low"/"both"` を付けたエクササイズが、対応する側の表示付きで出てきます。
 - `SPORTS` のエクササイズに `tag: "クセ改善"` または `tag: "パフォーマンス"` を付けると、結果一覧にその表示が付きます。
 - 「レッスンまとめ」は `buildSummary()` が、選んだ項目すべてのエクササイズ名を数えて、複数の項目に共通して出てくるものを優先的に上位（デフォルト5つ）に並べる仕組みです。件数を変えたい場合は `buildSummary(selectedItems, 5)` の `5` を書き換えてください。
-- 姿勢・身体評価の各項目には、横から見た人型シルエット図（`POSTURE_DIAGRAMS`）が付いています。図は塗りつぶしのパーツ（`head`=頭、`neck`=首、`torso`=胴体、`pelvis`=骨盤、`shoulder-cap`=肩まわり、`leg`=脚、`plumb`=基準の垂直線）でできていて、`part highlight` クラスを付けた部分がその姿勢タイプの特徴として緑色で強調表示されます（付けない部分は `part` のみでグレー表示）。新しい姿勢タイプを追加する場合は、`POSTURE_DIAGRAMS` に同じ形式でSVGを追加してください（`POSTURE_ASSESSMENTS` の `id` と合わせる必要があります）。共通パーツは `POSTURE_PLUMB` / `POSTURE_LEG` / `POSTURE_HEAD_NEUTRAL` / `POSTURE_NECK_NEUTRAL` / `POSTURE_TORSO_NEUTRAL` / `POSTURE_PELVIS_NEUTRAL` として定義済みなので、そのまま使い回せます。
+- 姿勢・身体評価の各項目には、横から見た人型シルエット図（`POSTURE_DIAGRAMS`）が付いています。実際の姿勢分析と同じように、基準の垂直線（plumb line）に対して耳・肩峰・骨盤（大転子）・膝・くるぶしの5点がどれだけ前後にずれるかで姿勢タイプを表現しています。図は `buildPostureDiagram()` という関数が `POSTURE_DIAGRAM_PARAMS` の数値から自動生成します。新しい姿勢タイプを追加する場合は、`POSTURE_DIAGRAM_PARAMS` に `POSTURE_ASSESSMENTS` の `id` と同じキーで以下のパラメータを追加してください（省略した値は 0 扱い）。
+  - `earDx` / `shoulderDx` / `hipDx` / `kneeDx` / `ankleDx` … 基準線からの前後のずれ（+で前方、-で後方）
+  - `backBulge` … 胸椎後弯（猫背）の強さ
+  - `frontBulge` … 腰椎前弯（反り腰）の強さ（マイナスで平背方向）
+  - `pelvisRotation` … 骨盤ブロックの回転角度（骨盤前傾・後傾用）
