@@ -279,7 +279,7 @@ const POSTURE_ASSESSMENTS = [
   },
   {
     id: "posture-round-back",
-    label: "猫背",
+    label: "猫背（胸椎後弯・頭部前方位）",
     exercises: [
       { name: "スワン", note: "胸を開き、丸まった背中を伸ばす" },
       { name: "チェストリフト", note: "正しい上体の起こし方を身につけ、猫背の癖を減らす" },
@@ -1108,6 +1108,7 @@ const photoState = {
   points: null,
   facingSign: 1,
   dragKey: null,
+  dragFingerPos: null,
   lastCheckedIds: [],
 };
 
@@ -1269,9 +1270,32 @@ function redrawPhotoCanvas() {
   const dotRadius = Math.max(4, width * 0.01);
   PHOTO_POINT_KEYS.forEach((key) => {
     const p = points[key];
+    const isDragging = key === photoState.dragKey;
+
+    // ドラッグ中の点は、指の実際の位置（fingerPos）と地図ピンのように少し離して表示し、
+    // 指で隠れて見えなくならないようにする。指の位置には小さな十字だけ残す。
+    if (isDragging && photoState.dragFingerPos) {
+      ctx.beginPath();
+      ctx.strokeStyle = PHOTO_MARK_COLOR;
+      ctx.lineWidth = Math.max(1.5, width * 0.003);
+      ctx.setLineDash([width * 0.008, width * 0.008]);
+      ctx.moveTo(photoState.dragFingerPos.x, photoState.dragFingerPos.y);
+      ctx.lineTo(p.x, p.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      const crossSize = Math.max(6, width * 0.014);
+      ctx.beginPath();
+      ctx.moveTo(photoState.dragFingerPos.x - crossSize, photoState.dragFingerPos.y);
+      ctx.lineTo(photoState.dragFingerPos.x + crossSize, photoState.dragFingerPos.y);
+      ctx.moveTo(photoState.dragFingerPos.x, photoState.dragFingerPos.y - crossSize);
+      ctx.lineTo(photoState.dragFingerPos.x, photoState.dragFingerPos.y + crossSize);
+      ctx.stroke();
+    }
+
     ctx.beginPath();
     ctx.fillStyle = PHOTO_MARK_COLOR;
-    ctx.arc(p.x, p.y, dotRadius, 0, Math.PI * 2);
+    ctx.arc(p.x, p.y, isDragging ? dotRadius * 1.6 : dotRadius, 0, Math.PI * 2);
     ctx.fill();
     ctx.strokeStyle = "#ffffff";
     ctx.lineWidth = Math.max(1.5, width * 0.0025);
@@ -1347,6 +1371,11 @@ function findNearestPointKey(pos) {
   return nearestKey;
 }
 
+// ドラッグ中、点を指の実際の位置よりこれだけ上に浮かせて表示する（地図のピンと同じ考え方）。
+function getDragLiftOffset() {
+  return Math.max(48, photoCanvasEl.width * 0.09);
+}
+
 if (photoCanvasEl) {
   photoCanvasEl.addEventListener("pointerdown", (evt) => {
     if (!photoState.points) return;
@@ -1354,7 +1383,9 @@ if (photoCanvasEl) {
     const key = findNearestPointKey(pos);
     if (!key) return;
     photoState.dragKey = key;
+    photoState.dragFingerPos = pos;
     photoCanvasEl.setPointerCapture(evt.pointerId);
+    redrawPhotoCanvas();
     evt.preventDefault();
   });
 
@@ -1363,7 +1394,13 @@ if (photoCanvasEl) {
     const pos = getCanvasPoint(evt);
     pos.x = Math.min(Math.max(pos.x, 0), photoCanvasEl.width);
     pos.y = Math.min(Math.max(pos.y, 0), photoCanvasEl.height);
-    photoState.points[photoState.dragKey] = pos;
+    photoState.dragFingerPos = pos;
+
+    const lifted = {
+      x: pos.x,
+      y: Math.max(pos.y - getDragLiftOffset(), 0),
+    };
+    photoState.points[photoState.dragKey] = lifted;
     redrawPhotoCanvas();
     evt.preventDefault();
   });
@@ -1371,7 +1408,9 @@ if (photoCanvasEl) {
   const endDrag = (evt) => {
     if (!photoState.dragKey) return;
     photoState.dragKey = null;
+    photoState.dragFingerPos = null;
     applyPostureMatch();
+    redrawPhotoCanvas();
     evt.preventDefault();
   };
   photoCanvasEl.addEventListener("pointerup", endDrag);
