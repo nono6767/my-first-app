@@ -3,19 +3,27 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>ピラティスレッスン提案アプリ</title>
+  <title>ピラティスレッスン提案</title>
   <link rel="stylesheet" href="style.css">
 </head>
 <body>
   <main>
-    <h1>ピラティスレッスン提案</h1>
-    <p class="lead">お客様の体の特徴・悩みを選ぶと、おすすめのレッスン内容を提示します。</p>
+    <p class="eyebrow">Pilates Lesson Finder</p>
+    <h1>お客様の悩みから、レッスン内容を提案します</h1>
+    <p class="lead">体の特徴・お悩みをタップして選ぶと、対応するおすすめのピラティスエクササイズを表示します。</p>
 
     <form id="concern-form">
       <fieldset>
-        <legend>体の特徴・悩み（複数選択できます）</legend>
-        <div id="concern-list" class="concern-list"></div>
+        <legend>性別（任意）</legend>
+        <p class="helper-text">選ぶと、骨格の傾向に合わせた項目が追加されます。からだの傾向には個人差があります。</p>
+        <div id="gender-list" class="segmented"></div>
       </fieldset>
+
+      <fieldset>
+        <legend>体の特徴・悩み（複数選択できます）</legend>
+        <div id="concern-list" class="chip-grid"></div>
+      </fieldset>
+
       <button type="submit">レッスン内容を提案する</button>
     </form>
 
