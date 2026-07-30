@@ -203,27 +203,46 @@ const POSTURE_ASSESSMENTS = [
 
 // 左右の高さの違い（肩・骨盤）の対応表。
 // 「高い側」＝使いすぎ・過緊張の傾向、「低い側」＝機能低下・使えていない傾向として扱う。
+// tightMuscles / weakMuscles は複数の筋肉を列挙できる（side: "high"/"low"、note で補足）。
 // exercises の side: "high"（高い側向け）/ "low"（低い側向け）/ "both"（両側・全体向け）
 const ASYMMETRY_ITEMS = [
   {
     id: "shoulder-asymmetry",
     label: "肩の高さの左右差",
-    tightMuscle: "僧帽筋上部・肩甲挙筋",
-    weakMuscle: "僧帽筋下部・前鋸筋",
+    tightMuscles: [{ side: "high", muscle: "僧帽筋上部・肩甲挙筋" }],
+    weakMuscles: [
+      { side: "low", muscle: "僧帽筋下部・前鋸筋" },
+      { side: "high", muscle: "僧帽筋下部・前鋸筋", note: "高い側にも起こりやすい" },
+    ],
     exercises: [
       { name: "ネックストレッチ＋ロールダウン", note: "首の付け根〜肩の緊張をゆるめる", side: "high" },
-      { name: "アームサークル（下制方向）", note: "肩甲骨を下げて使う感覚を養う", side: "low" },
+      {
+        name: "アームサークル（肩甲骨を下げた位置を保ちながら行う）",
+        note: "僧帽筋下部・前鋸筋を働かせる感覚を養う",
+        side: "both",
+      },
       { name: "スワン", note: "鏡を見ながら左右の肩の高さを揃える意識で行う", side: "both" },
     ],
   },
   {
     id: "pelvis-asymmetry",
     label: "骨盤の高さの左右差",
-    tightMuscle: "腰方形筋（QL）",
-    weakMuscle: "中殿筋",
+    tightMuscles: [
+      { side: "high", muscle: "腰方形筋（QL）" },
+      { side: "high", muscle: "内転筋群", note: "過緊張しやすい" },
+    ],
+    weakMuscles: [
+      { side: "low", muscle: "中殿筋" },
+      { side: "low", muscle: "腰方形筋・腹斜筋群", note: "伸長・弱化しやすい" },
+    ],
     exercises: [
       { name: "サイドベンドストレッチ", note: "腰まわりの側面の緊張をゆるめる", side: "high" },
-      { name: "サイドキック／クラムシェル", note: "股関節を支える筋肉を働かせる", side: "low" },
+      { name: "内ももリリース", note: "過緊張しやすい内転筋群をゆるめる", side: "high" },
+      {
+        name: "サイドキック／クラムシェル",
+        note: "骨盤の水平を保つための中殿筋（お尻の外側）を鍛える",
+        side: "low",
+      },
       { name: "ペルビッククロック", note: "骨盤の水平を意識しながら整える", side: "both" },
     ],
   },
@@ -388,9 +407,32 @@ function buildConcernBlock(item) {
   return block;
 }
 
+function sideLabelFor(side, higherSide) {
+  if (side === "both") return "両側";
+  const lowerSide = higherSide === "left" ? "right" : "left";
+  const actualSide = side === "high" ? higherSide : lowerSide;
+  return actualSide === "left" ? "左" : "右";
+}
+
+function buildMuscleRow(tagClass, tagText, entry, higherSide) {
+  const row = document.createElement("p");
+  row.className = "muscle-row";
+
+  const tag = document.createElement("span");
+  tag.className = "tag " + tagClass;
+  tag.textContent = tagText;
+  row.appendChild(tag);
+
+  let text = `${sideLabelFor(entry.side, higherSide)}側：${entry.muscle}`;
+  if (entry.note) text += `（${entry.note}）`;
+  row.appendChild(document.createTextNode(text));
+
+  return row;
+}
+
 function buildAsymmetryBlock(item, higherSide) {
-  const higherLabel = higherSide === "left" ? "左" : "右";
-  const lowerLabel = higherSide === "left" ? "右" : "左";
+  const higherLabel = sideLabelFor("high", higherSide);
+  const lowerLabel = sideLabelFor("low", higherSide);
 
   const block = document.createElement("div");
   block.className = "concern-block";
@@ -399,27 +441,17 @@ function buildAsymmetryBlock(item, higherSide) {
   heading.textContent = `${item.label}（${higherLabel}が高い）`;
   block.appendChild(heading);
 
-  const tightRow = document.createElement("p");
-  tightRow.className = "muscle-row";
-  const tightTag = document.createElement("span");
-  tightTag.className = "tag tag-tight";
-  tightTag.textContent = "使いすぎ傾向";
-  tightRow.appendChild(tightTag);
-  tightRow.appendChild(
-    document.createTextNode(`${higherLabel}側：${item.tightMuscle}`)
-  );
-  block.appendChild(tightRow);
+  item.tightMuscles.forEach((entry) => {
+    block.appendChild(
+      buildMuscleRow("tag-tight", "使いすぎ傾向", entry, higherSide)
+    );
+  });
 
-  const weakRow = document.createElement("p");
-  weakRow.className = "muscle-row";
-  const weakTag = document.createElement("span");
-  weakTag.className = "tag tag-weak";
-  weakTag.textContent = "使えていない傾向";
-  weakRow.appendChild(weakTag);
-  weakRow.appendChild(
-    document.createTextNode(`${lowerLabel}側：${item.weakMuscle}`)
-  );
-  block.appendChild(weakRow);
+  item.weakMuscles.forEach((entry) => {
+    block.appendChild(
+      buildMuscleRow("tag-weak", "使えていない傾向", entry, higherSide)
+    );
+  });
 
   const list = document.createElement("ul");
   item.exercises.forEach((exercise) => {
