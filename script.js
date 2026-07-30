@@ -201,6 +201,192 @@ const POSTURE_ASSESSMENTS = [
   },
 ];
 
+// 運動経歴（スポーツ歴）と、おすすめエクササイズの対応表。
+// exercise.tag: "クセ改善"（そのスポーツで生じやすいクセ・アンバランスへのアプローチ）
+//              / "パフォーマンス"（そのスポーツの上達のためのアプローチ）
+const SPORTS = [
+  {
+    id: "golf",
+    label: "ゴルフ",
+    exercises: [
+      {
+        name: "スパインツイスト（非利き手方向を重点的に）",
+        note: "スイングで偏った回旋パターンを、両方向でバランスよく使えるようにする",
+        tag: "クセ改善",
+      },
+      {
+        name: "ソウ",
+        note: "回旋と前屈の複合動作で、股関節と胸椎の連動を整える",
+        tag: "クセ改善",
+      },
+      {
+        name: "ペルビックカール",
+        note: "前傾姿勢で酷使される腰部を守るため、体幹の安定性を高める",
+        tag: "クセ改善",
+      },
+      {
+        name: "オブリークツイスト系エクササイズ",
+        note: "スイングの回旋力とスピードを生む腹斜筋を強化する",
+        tag: "パフォーマンス",
+      },
+      {
+        name: "スタンディングロータリードリル",
+        note: "立位での回旋パワーを、スイングに近い形で強化する",
+        tag: "パフォーマンス",
+      },
+      {
+        name: "ヒップヒンジドリル",
+        note: "股関節主導のアドレス姿勢（前傾）の質を高める",
+        tag: "パフォーマンス",
+      },
+    ],
+  },
+  {
+    id: "soccer",
+    label: "サッカー",
+    exercises: [
+      {
+        name: "腸腰筋ストレッチ",
+        note: "キック動作で過緊張しやすい股関節前面をゆるめる",
+        tag: "クセ改善",
+      },
+      {
+        name: "内転筋ストレッチ",
+        note: "キック動作で酷使されやすい内ももをケアする",
+        tag: "クセ改善",
+      },
+      {
+        name: "サイドキック／クラムシェル",
+        note: "軸脚・蹴り脚で偏りやすい股関節伸展・外転筋（殿筋）を働かせる",
+        tag: "クセ改善",
+      },
+      {
+        name: "シングルレッグブリッジ",
+        note: "片脚での体幹・殿筋の安定性とパワーを養う",
+        tag: "パフォーマンス",
+      },
+      {
+        name: "レッグサークル",
+        note: "股関節の可動性とコントロールを高める",
+        tag: "パフォーマンス",
+      },
+      {
+        name: "スタンディングバランスドリル",
+        note: "切り返し動作に必要な片脚での安定性を養う",
+        tag: "パフォーマンス",
+      },
+    ],
+  },
+  {
+    id: "tennis",
+    label: "テニス",
+    exercises: [
+      {
+        name: "スパインツイスト（非利き手方向を重点的に）",
+        note: "打球動作で偏った回旋パターンを整える",
+        tag: "クセ改善",
+      },
+      {
+        name: "ショルダーブリッジ",
+        note: "利き腕側で酷使されやすい肩まわりをケアしながら体幹を使う",
+        tag: "クセ改善",
+      },
+      {
+        name: "チェストオープナー",
+        note: "前傾しがちな利き腕側の肩まわりを開く",
+        tag: "クセ改善",
+      },
+      {
+        name: "オブリークツイスト系エクササイズ",
+        note: "サーブ・ストロークに必要な回旋力を養う",
+        tag: "パフォーマンス",
+      },
+      {
+        name: "サイドキック",
+        note: "フットワークを支える股関節の安定性を高める",
+        tag: "パフォーマンス",
+      },
+      {
+        name: "プランク",
+        note: "ショット時の体幹の安定性を強化する",
+        tag: "パフォーマンス",
+      },
+    ],
+  },
+  {
+    id: "surfing",
+    label: "サーフィン",
+    exercises: [
+      {
+        name: "チェストオープナー",
+        note: "パドリングで丸まりがちな胸まわりを開く",
+        tag: "クセ改善",
+      },
+      {
+        name: "キャットストレッチ",
+        note: "反り腰姿勢の保持で酷使されやすい腰部をケアする",
+        tag: "クセ改善",
+      },
+      {
+        name: "ペルビックカール",
+        note: "体幹を使い、腰への負担を軽減する",
+        tag: "クセ改善",
+      },
+      {
+        name: "スワン",
+        note: "パドリングに必要な背中の伸展筋力を養う",
+        tag: "パフォーマンス",
+      },
+      {
+        name: "スパインツイスト",
+        note: "ターン動作に必要な回旋の可動性を高める",
+        tag: "パフォーマンス",
+      },
+      {
+        name: "サイドキック／クラムシェル",
+        note: "テイクオフ・ボード操作を支える股関節の安定性を養う",
+        tag: "パフォーマンス",
+      },
+    ],
+  },
+  {
+    id: "dance",
+    label: "ダンス",
+    exercises: [
+      {
+        name: "ペルビックカール",
+        note: "過可動域になりやすい骨盤をコントロールする力を養う",
+        tag: "クセ改善",
+      },
+      {
+        name: "ハンドレッド",
+        note: "柔軟性に頼りがちな体幹の安定性を意識づける",
+        tag: "クセ改善",
+      },
+      {
+        name: "ニーストレッチ",
+        note: "股関節を安定させてコントロールする力を養う",
+        tag: "クセ改善",
+      },
+      {
+        name: "レッグサークル",
+        note: "脚の可動域を保ちながらコントロールを高める",
+        tag: "パフォーマンス",
+      },
+      {
+        name: "スパインツイスト",
+        note: "上半身の表現力を支える回旋のコントロールを養う",
+        tag: "パフォーマンス",
+      },
+      {
+        name: "サイドキック",
+        note: "片脚でのバランス・軸の安定性を高める",
+        tag: "パフォーマンス",
+      },
+    ],
+  },
+];
+
 // 左右の高さの違い（肩・骨盤）の対応表。
 // 「高い側」＝使いすぎ・過緊張の傾向、「低い側」＝機能低下・使えていない傾向として扱う。
 // tightMuscles / weakMuscles は複数の筋肉を列挙できる（side: "high"/"low"、note で補足）。
@@ -256,6 +442,7 @@ const GENDERS = [
 const genderListEl = document.getElementById("gender-list");
 const concernListEl = document.getElementById("concern-list");
 const postureListEl = document.getElementById("posture-list");
+const sportsListEl = document.getElementById("sports-list");
 const asymmetryGroupEl = document.getElementById("asymmetry-group");
 const formEl = document.getElementById("concern-form");
 const resultEl = document.getElementById("result");
@@ -335,6 +522,10 @@ function renderPostureList() {
   renderCheckboxList(postureListEl, POSTURE_ASSESSMENTS, "posture");
 }
 
+function renderSportsList() {
+  renderCheckboxList(sportsListEl, SPORTS, "sport");
+}
+
 function renderAsymmetryGroup() {
   asymmetryGroupEl.innerHTML = "";
 
@@ -377,6 +568,7 @@ function renderAsymmetryGroup() {
 renderGenderList();
 renderConcernList();
 renderPostureList();
+renderSportsList();
 renderAsymmetryGroup();
 
 function buildConcernBlock(item) {
@@ -394,7 +586,9 @@ function buildConcernBlock(item) {
       const li = document.createElement("li");
       const nameEl = document.createElement("span");
       nameEl.className = "exercise-name";
-      nameEl.textContent = exercise.name;
+      nameEl.textContent = exercise.tag
+        ? `［${exercise.tag}］${exercise.name}`
+        : exercise.name;
       const noteEl = document.createElement("span");
       noteEl.className = "exercise-note";
       noteEl.textContent = " — " + exercise.note;
@@ -496,6 +690,10 @@ formEl.addEventListener("submit", (event) => {
     formEl.querySelectorAll('input[name="posture"]:checked')
   ).map((input) => input.value);
 
+  const checkedSportIds = Array.from(
+    formEl.querySelectorAll('input[name="sport"]:checked')
+  ).map((input) => input.value);
+
   const asymmetryEntries = Object.entries(asymmetrySelections).filter(
     ([, side]) => side
   );
@@ -505,11 +703,12 @@ formEl.addEventListener("submit", (event) => {
   if (
     checkedConcernIds.length === 0 &&
     checkedPostureIds.length === 0 &&
+    checkedSportIds.length === 0 &&
     asymmetryEntries.length === 0
   ) {
     const message = document.createElement("p");
     message.className = "empty-message";
-    message.textContent = "悩み・姿勢評価のいずれかを1つ以上選んでください。";
+    message.textContent = "悩み・姿勢評価・運動経歴のいずれかを1つ以上選んでください。";
     resultContentEl.appendChild(message);
     resultEl.hidden = false;
     return;
@@ -534,6 +733,16 @@ formEl.addEventListener("submit", (event) => {
     asymmetryEntries.forEach(([id, side]) => {
       const item = ASYMMETRY_ITEMS.find((a) => a.id === id);
       if (item) resultContentEl.appendChild(buildAsymmetryBlock(item, side));
+    });
+  }
+
+  if (checkedSportIds.length > 0) {
+    resultContentEl.appendChild(
+      buildSectionHeading("運動経歴に基づくご提案")
+    );
+    checkedSportIds.forEach((id) => {
+      const sport = SPORTS.find((s) => s.id === id);
+      if (sport) resultContentEl.appendChild(buildConcernBlock(sport));
     });
   }
 
