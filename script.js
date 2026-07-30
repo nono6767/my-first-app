@@ -1096,6 +1096,21 @@ function setPhotoStatus(text, kind) {
   photoStatusEl.className = "photo-status" + (kind ? ` is-${kind}` : "");
 }
 
+// buildPostureDiagram() の座標系（耳y=14〜くるぶしy=130、全体で約116）に合わせて
+// 写真上のピクセル距離を同じ単位に変換する。
+const POSE_DIAGRAM_SCALE = 116;
+const PHOTO_MARK_COLOR = "#b0392f";
+const PHOTO_POINT_KEYS = ["ear", "shoulder", "hip", "knee", "ankle"];
+
+// ドラッグで動かした後も再計算できるよう、写真の状態をここに保持しておく。
+const photoState = {
+  imageBitmap: null,
+  points: null,
+  facingSign: 1,
+  dragKey: null,
+  lastCheckedId: null,
+};
+
 function pickVisibleSide(landmarks) {
   const leftIdx = [
     POSE_LANDMARK.LEFT_EAR,
@@ -1131,11 +1146,7 @@ function pickVisibleSide(landmarks) {
       };
 }
 
-// buildPostureDiagram() の座標系（耳y=14〜くるぶしy=130、全体で約116）に合わせて
-// 写真上のピクセル距離を同じ単位に変換する。
-const POSE_DIAGRAM_SCALE = 116;
-
-function analyzePosePhoto(landmarks, width, height) {
+function detectPointsFromLandmarks(landmarks, width, height) {
   const side = pickVisibleSide(landmarks);
   const toPixels = (lm) => ({ x: lm.x * width, y: lm.y * height });
 
@@ -1147,8 +1158,13 @@ function analyzePosePhoto(landmarks, width, height) {
     ankle: toPixels(landmarks[side.ankle]),
   };
   const nose = toPixels(landmarks[POSE_LANDMARK.NOSE]);
-
   const facingSign = nose.x >= points.ear.x ? 1 : -1;
+
+  return { points, facingSign };
+}
+
+// 現在の点の位置（ドラッグ後も含む）から、基準線とのズレを計算する。
+function computeOffsets(points, facingSign) {
   const bodyHeight = Math.max(Math.abs(points.ankle.y - points.ear.y), 1);
   const normalize = (point) =>
     ((facingSign * (point.x - points.ankle.x)) / bodyHeight) * POSE_DIAGRAM_SCALE;
@@ -1158,7 +1174,6 @@ function analyzePosePhoto(landmarks, width, height) {
     shoulderDx: normalize(points.shoulder),
     hipDx: normalize(points.hip),
     kneeDx: normalize(points.knee),
-    points,
   };
 }
 
@@ -1181,11 +1196,19 @@ function matchPostureType(offsets) {
   return candidates[0];
 }
 
-function drawPhotoOverlay(ctx, points, width, height) {
-  const markColor = "#b0392f";
-  ctx.save();
+function redrawPhotoCanvas() {
+  if (!photoState.imageBitmap || !photoState.points) return;
+  const canvas = photoCanvasEl;
+  const ctx = canvas.getContext("2d");
+  const width = canvas.width;
+  const height = canvas.height;
 
-  ctx.strokeStyle = markColor;
+  ctx.clearRect(0, 0, width, height);
+  ctx.drawImage(photoState.imageBitmap, 0, 0);
+
+  const points = photoState.points;
+  ctx.save();
+  ctx.strokeStyle = PHOTO_MARK_COLOR;
   ctx.lineWidth = Math.max(2, width * 0.004);
   ctx.beginPath();
   ctx.moveTo(points.ankle.x, 0);
@@ -1193,17 +1216,107 @@ function drawPhotoOverlay(ctx, points, width, height) {
   ctx.stroke();
 
   const dotRadius = Math.max(4, width * 0.01);
-  [points.ear, points.shoulder, points.hip, points.knee, points.ankle].forEach((p) => {
+  PHOTO_POINT_KEYS.forEach((key) => {
+    const p = points[key];
     ctx.beginPath();
-    ctx.fillStyle = markColor;
+    ctx.fillStyle = PHOTO_MARK_COLOR;
     ctx.arc(p.x, p.y, dotRadius, 0, Math.PI * 2);
     ctx.fill();
     ctx.strokeStyle = "#ffffff";
     ctx.lineWidth = Math.max(1.5, width * 0.0025);
     ctx.stroke();
   });
-
   ctx.restore();
+}
+
+function applyPostureMatch() {
+  const offsets = computeOffsets(photoState.points, photoState.facingSign);
+  const match = matchPostureType(offsets);
+
+  if (photoState.lastCheckedId) {
+    const previousCheckbox = postureListEl.querySelector(
+      `input[value="${photoState.lastCheckedId}"]`
+    );
+    if (previousCheckbox && photoState.lastCheckedId !== match.id) {
+      previousCheckbox.checked = false;
+    }
+  }
+
+  if (!match.id) {
+    photoState.lastCheckedId = null;
+    setPhotoStatus(
+      "特に大きな姿勢の偏りは検出されませんでした。図と見比べて選んでください。"
+    );
+    return;
+  }
+
+  const posture = POSTURE_ASSESSMENTS.find((p) => p.id === match.id);
+  const checkbox = postureListEl.querySelector(`input[value="${match.id}"]`);
+  if (checkbox) checkbox.checked = true;
+  photoState.lastCheckedId = match.id;
+
+  setPhotoStatus(
+    `「${posture ? posture.label : match.id}」に近い姿勢と判定し、自動でチェックしました。点がずれていればドラッグで調整できます。`,
+    "match"
+  );
+}
+
+// キャンバスの表示サイズとピクセルサイズが違う（CSSで縮小表示している）ため、
+// ポインター座標をキャンバス内部の座標に変換する。
+function getCanvasPoint(evt) {
+  const rect = photoCanvasEl.getBoundingClientRect();
+  const scaleX = photoCanvasEl.width / rect.width;
+  const scaleY = photoCanvasEl.height / rect.height;
+  return {
+    x: (evt.clientX - rect.left) * scaleX,
+    y: (evt.clientY - rect.top) * scaleY,
+  };
+}
+
+function findNearestPointKey(pos) {
+  const hitRadius = Math.max(26, photoCanvasEl.width * 0.035);
+  let nearestKey = null;
+  let nearestDist = Infinity;
+  PHOTO_POINT_KEYS.forEach((key) => {
+    const p = photoState.points[key];
+    const dist = Math.hypot(p.x - pos.x, p.y - pos.y);
+    if (dist < hitRadius && dist < nearestDist) {
+      nearestDist = dist;
+      nearestKey = key;
+    }
+  });
+  return nearestKey;
+}
+
+if (photoCanvasEl) {
+  photoCanvasEl.addEventListener("pointerdown", (evt) => {
+    if (!photoState.points) return;
+    const pos = getCanvasPoint(evt);
+    const key = findNearestPointKey(pos);
+    if (!key) return;
+    photoState.dragKey = key;
+    photoCanvasEl.setPointerCapture(evt.pointerId);
+    evt.preventDefault();
+  });
+
+  photoCanvasEl.addEventListener("pointermove", (evt) => {
+    if (!photoState.dragKey) return;
+    const pos = getCanvasPoint(evt);
+    pos.x = Math.min(Math.max(pos.x, 0), photoCanvasEl.width);
+    pos.y = Math.min(Math.max(pos.y, 0), photoCanvasEl.height);
+    photoState.points[photoState.dragKey] = pos;
+    redrawPhotoCanvas();
+    evt.preventDefault();
+  });
+
+  const endDrag = (evt) => {
+    if (!photoState.dragKey) return;
+    photoState.dragKey = null;
+    applyPostureMatch();
+    evt.preventDefault();
+  };
+  photoCanvasEl.addEventListener("pointerup", endDrag);
+  photoCanvasEl.addEventListener("pointercancel", endDrag);
 }
 
 if (photoInput) {
@@ -1212,6 +1325,9 @@ if (photoInput) {
     if (!file) return;
 
     photoPreviewWrapEl.hidden = true;
+    photoState.imageBitmap = null;
+    photoState.points = null;
+    photoState.lastCheckedId = null;
     setPhotoStatus(
       "解析しています…（初回はAIモデルの読み込みのため時間がかかることがあります）"
     );
@@ -1236,26 +1352,18 @@ if (photoInput) {
         return;
       }
 
-      const offsets = analyzePosePhoto(result.landmarks[0], canvas.width, canvas.height);
-      drawPhotoOverlay(ctx, offsets.points, canvas.width, canvas.height);
-      photoPreviewWrapEl.hidden = false;
-
-      const match = matchPostureType(offsets);
-      if (!match.id) {
-        setPhotoStatus(
-          "特に大きな姿勢の偏りは検出されませんでした。図と見比べて選んでください。"
-        );
-        return;
-      }
-
-      const posture = POSTURE_ASSESSMENTS.find((p) => p.id === match.id);
-      const checkbox = postureListEl.querySelector(`input[value="${match.id}"]`);
-      if (checkbox) checkbox.checked = true;
-
-      setPhotoStatus(
-        `「${posture ? posture.label : match.id}」に近い姿勢と判定し、自動でチェックしました。あくまで目安なので、必要に応じて選び直してください。`,
-        "match"
+      const { points, facingSign } = detectPointsFromLandmarks(
+        result.landmarks[0],
+        canvas.width,
+        canvas.height
       );
+      photoState.imageBitmap = imageBitmap;
+      photoState.points = points;
+      photoState.facingSign = facingSign;
+
+      redrawPhotoCanvas();
+      photoPreviewWrapEl.hidden = false;
+      applyPostureMatch();
     } catch (err) {
       console.error(err);
       photoPreviewWrapEl.hidden = true;

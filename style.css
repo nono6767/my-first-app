@@ -214,6 +214,8 @@ legend {
   width: auto;
   height: auto;
   border-radius: 6px;
+  touch-action: none;
+  cursor: grab;
 }
 
 .segmented {
