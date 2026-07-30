@@ -138,6 +138,84 @@ legend {
   line-height: 1.5;
 }
 
+.photo-analyzer {
+  margin-bottom: 1rem;
+}
+
+.photo-upload {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.3rem;
+  padding: 1.4rem 1rem;
+  border: 1.5px dashed var(--border);
+  border-radius: 12px;
+  background: var(--surface);
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+
+.photo-upload:active {
+  background: var(--surface-raised);
+}
+
+.photo-upload input {
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  width: 100%;
+  height: 100%;
+  cursor: pointer;
+}
+
+.photo-upload-title {
+  font-weight: 600;
+  font-size: 0.92rem;
+  color: var(--ink);
+}
+
+.photo-upload-hint {
+  font-size: 0.8rem;
+  color: var(--accent);
+}
+
+.photo-status {
+  margin: 0.7rem 0 0;
+  font-size: 0.85rem;
+  color: var(--ink-muted);
+}
+
+.photo-status.is-match {
+  color: var(--accent);
+  font-weight: 600;
+}
+
+.photo-status.is-error {
+  color: var(--danger);
+}
+
+.photo-preview-wrap {
+  margin-top: 0.9rem;
+  display: flex;
+  justify-content: center;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 0.6rem;
+  overflow: hidden;
+}
+
+.photo-canvas {
+  max-width: 100%;
+  max-height: 340px;
+  width: auto;
+  height: auto;
+  border-radius: 6px;
+}
+
 .segmented {
   display: flex;
   gap: 0.55rem;

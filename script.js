@@ -1042,3 +1042,227 @@ formEl.addEventListener("submit", (event) => {
 
   resultEl.hidden = false;
 });
+
+// 写真からの姿勢自動分析。
+// ブラウザ内で動くAI（MediaPipe Pose）を使って耳・肩峰・骨盤・膝・くるぶしの位置を検出し、
+// buildPostureDiagram() と同じ座標の考え方（基準線からのズレ）に変換して、
+// 一番近い姿勢タイプ（POSTURE_DIAGRAM_PARAMS）を自動でチェックする。写真は端末内で処理され、送信されない。
+const photoInput = document.getElementById("posture-photo-input");
+const photoStatusEl = document.getElementById("photo-status");
+const photoPreviewWrapEl = document.getElementById("photo-preview-wrap");
+const photoCanvasEl = document.getElementById("photo-canvas");
+
+const POSE_LANDMARK = {
+  NOSE: 0,
+  LEFT_EAR: 7,
+  RIGHT_EAR: 8,
+  LEFT_SHOULDER: 11,
+  RIGHT_SHOULDER: 12,
+  LEFT_HIP: 23,
+  RIGHT_HIP: 24,
+  LEFT_KNEE: 25,
+  RIGHT_KNEE: 26,
+  LEFT_ANKLE: 27,
+  RIGHT_ANKLE: 28,
+};
+
+let poseLandmarkerPromise = null;
+
+function loadPoseLandmarker() {
+  if (!poseLandmarkerPromise) {
+    poseLandmarkerPromise = (async () => {
+      const vision = await import(
+        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/vision_bundle.mjs"
+      );
+      const filesetResolver = await vision.FilesetResolver.forVisionTasks(
+        "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@0.10.14/wasm"
+      );
+      return vision.PoseLandmarker.createFromOptions(filesetResolver, {
+        baseOptions: {
+          modelAssetPath:
+            "https://storage.googleapis.com/mediapipe-models/pose_landmarker/pose_landmarker_lite/float16/latest/pose_landmarker_lite.task",
+        },
+        runningMode: "IMAGE",
+      });
+    })();
+  }
+  return poseLandmarkerPromise;
+}
+
+function setPhotoStatus(text, kind) {
+  if (!photoStatusEl) return;
+  photoStatusEl.hidden = !text;
+  photoStatusEl.textContent = text || "";
+  photoStatusEl.className = "photo-status" + (kind ? ` is-${kind}` : "");
+}
+
+function pickVisibleSide(landmarks) {
+  const leftIdx = [
+    POSE_LANDMARK.LEFT_EAR,
+    POSE_LANDMARK.LEFT_SHOULDER,
+    POSE_LANDMARK.LEFT_HIP,
+    POSE_LANDMARK.LEFT_KNEE,
+    POSE_LANDMARK.LEFT_ANKLE,
+  ];
+  const rightIdx = [
+    POSE_LANDMARK.RIGHT_EAR,
+    POSE_LANDMARK.RIGHT_SHOULDER,
+    POSE_LANDMARK.RIGHT_HIP,
+    POSE_LANDMARK.RIGHT_KNEE,
+    POSE_LANDMARK.RIGHT_ANKLE,
+  ];
+  const avgVisibility = (idxs) =>
+    idxs.reduce((sum, i) => sum + (landmarks[i]?.visibility ?? 0), 0) / idxs.length;
+
+  return avgVisibility(leftIdx) >= avgVisibility(rightIdx)
+    ? {
+        ear: POSE_LANDMARK.LEFT_EAR,
+        shoulder: POSE_LANDMARK.LEFT_SHOULDER,
+        hip: POSE_LANDMARK.LEFT_HIP,
+        knee: POSE_LANDMARK.LEFT_KNEE,
+        ankle: POSE_LANDMARK.LEFT_ANKLE,
+      }
+    : {
+        ear: POSE_LANDMARK.RIGHT_EAR,
+        shoulder: POSE_LANDMARK.RIGHT_SHOULDER,
+        hip: POSE_LANDMARK.RIGHT_HIP,
+        knee: POSE_LANDMARK.RIGHT_KNEE,
+        ankle: POSE_LANDMARK.RIGHT_ANKLE,
+      };
+}
+
+// buildPostureDiagram() の座標系（耳y=14〜くるぶしy=130、全体で約116）に合わせて
+// 写真上のピクセル距離を同じ単位に変換する。
+const POSE_DIAGRAM_SCALE = 116;
+
+function analyzePosePhoto(landmarks, width, height) {
+  const side = pickVisibleSide(landmarks);
+  const toPixels = (lm) => ({ x: lm.x * width, y: lm.y * height });
+
+  const points = {
+    ear: toPixels(landmarks[side.ear]),
+    shoulder: toPixels(landmarks[side.shoulder]),
+    hip: toPixels(landmarks[side.hip]),
+    knee: toPixels(landmarks[side.knee]),
+    ankle: toPixels(landmarks[side.ankle]),
+  };
+  const nose = toPixels(landmarks[POSE_LANDMARK.NOSE]);
+
+  const facingSign = nose.x >= points.ear.x ? 1 : -1;
+  const bodyHeight = Math.max(Math.abs(points.ankle.y - points.ear.y), 1);
+  const normalize = (point) =>
+    ((facingSign * (point.x - points.ankle.x)) / bodyHeight) * POSE_DIAGRAM_SCALE;
+
+  return {
+    earDx: normalize(points.ear),
+    shoulderDx: normalize(points.shoulder),
+    hipDx: normalize(points.hip),
+    kneeDx: normalize(points.knee),
+    points,
+  };
+}
+
+function matchPostureType(offsets) {
+  const candidates = Object.entries(POSTURE_DIAGRAM_PARAMS).map(([id, params]) => ({
+    id,
+    distance: Math.hypot(
+      (params.earDx || 0) - offsets.earDx,
+      (params.shoulderDx || 0) - offsets.shoulderDx,
+      (params.hipDx || 0) - offsets.hipDx,
+      (params.kneeDx || 0) - offsets.kneeDx
+    ),
+  }));
+  // 「特に偏りなし」もひとつの候補として比較し、最も近ければ何もチェックしない。
+  candidates.push({
+    id: null,
+    distance: Math.hypot(offsets.earDx, offsets.shoulderDx, offsets.hipDx, offsets.kneeDx),
+  });
+  candidates.sort((a, b) => a.distance - b.distance);
+  return candidates[0];
+}
+
+function drawPhotoOverlay(ctx, points, width, height) {
+  const markColor = "#b0392f";
+  ctx.save();
+
+  ctx.strokeStyle = markColor;
+  ctx.lineWidth = Math.max(2, width * 0.004);
+  ctx.beginPath();
+  ctx.moveTo(points.ankle.x, 0);
+  ctx.lineTo(points.ankle.x, height);
+  ctx.stroke();
+
+  const dotRadius = Math.max(4, width * 0.01);
+  [points.ear, points.shoulder, points.hip, points.knee, points.ankle].forEach((p) => {
+    ctx.beginPath();
+    ctx.fillStyle = markColor;
+    ctx.arc(p.x, p.y, dotRadius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = Math.max(1.5, width * 0.0025);
+    ctx.stroke();
+  });
+
+  ctx.restore();
+}
+
+if (photoInput) {
+  photoInput.addEventListener("change", async () => {
+    const file = photoInput.files && photoInput.files[0];
+    if (!file) return;
+
+    photoPreviewWrapEl.hidden = true;
+    setPhotoStatus(
+      "解析しています…（初回はAIモデルの読み込みのため時間がかかることがあります）"
+    );
+
+    try {
+      const imageBitmap = await createImageBitmap(file);
+      const canvas = photoCanvasEl;
+      canvas.width = imageBitmap.width;
+      canvas.height = imageBitmap.height;
+      const ctx = canvas.getContext("2d");
+      ctx.drawImage(imageBitmap, 0, 0);
+
+      const landmarker = await loadPoseLandmarker();
+      const result = landmarker.detect(canvas);
+
+      if (!result.landmarks || result.landmarks.length === 0) {
+        photoPreviewWrapEl.hidden = false;
+        setPhotoStatus(
+          "体を検出できませんでした。全身が写った横向きの写真でお試しください。",
+          "error"
+        );
+        return;
+      }
+
+      const offsets = analyzePosePhoto(result.landmarks[0], canvas.width, canvas.height);
+      drawPhotoOverlay(ctx, offsets.points, canvas.width, canvas.height);
+      photoPreviewWrapEl.hidden = false;
+
+      const match = matchPostureType(offsets);
+      if (!match.id) {
+        setPhotoStatus(
+          "特に大きな姿勢の偏りは検出されませんでした。図と見比べて選んでください。"
+        );
+        return;
+      }
+
+      const posture = POSTURE_ASSESSMENTS.find((p) => p.id === match.id);
+      const checkbox = postureListEl.querySelector(`input[value="${match.id}"]`);
+      if (checkbox) checkbox.checked = true;
+
+      setPhotoStatus(
+        `「${posture ? posture.label : match.id}」に近い姿勢と判定し、自動でチェックしました。あくまで目安なので、必要に応じて選び直してください。`,
+        "match"
+      );
+    } catch (err) {
+      console.error(err);
+      photoPreviewWrapEl.hidden = true;
+      setPhotoStatus(
+        "解析中にエラーが発生しました。通信環境をご確認のうえ、もう一度お試しください。",
+        "error"
+      );
+    }
+  });
+}
