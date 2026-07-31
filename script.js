@@ -1681,10 +1681,7 @@ function redrawBackPhotoCanvas() {
     ctx.stroke();
   });
 
-  ASYM_POINT_KEYS.forEach((key) => {
-    const p = points[key];
-    const isDragging = key === backPhotoState.dragKey;
-
+  function drawDraggableDot(p, isDragging) {
     if (isDragging && backPhotoState.dragFingerPos) {
       ctx.beginPath();
       ctx.strokeStyle = PHOTO_MARK_COLOR;
@@ -1717,7 +1714,19 @@ function redrawBackPhotoCanvas() {
     ctx.strokeStyle = "#ffffff";
     ctx.lineWidth = Math.max(2, width * 0.0035);
     ctx.stroke();
+  }
+
+  ASYM_POINT_KEYS.forEach((key) => {
+    drawDraggableDot(points[key], key === backPhotoState.dragKey);
   });
+
+  // 中心線の持ち手（ドラッグして左右に動かせる）。
+  if (backPhotoState.centerX != null) {
+    drawDraggableDot(
+      getCenterLineHandlePos(),
+      backPhotoState.dragKey === CENTERLINE_KEY
+    );
+  }
   ctx.restore();
 }
 
@@ -1769,7 +1778,18 @@ function getBackCanvasPoint(evt) {
   };
 }
 
-function findNearestAsymPointKey(pos) {
+// 中心の縦線は、上のほうにある持ち手（ハンドル）をドラッグして左右に動かせる。
+const CENTERLINE_HANDLE_Y_RATIO = 0.06;
+const CENTERLINE_KEY = "centerLine";
+
+function getCenterLineHandlePos() {
+  return {
+    x: backPhotoState.centerX,
+    y: backPhotoCanvasEl.height * CENTERLINE_HANDLE_Y_RATIO,
+  };
+}
+
+function findDragTargetKey(pos) {
   const hitRadius = Math.max(26, backPhotoCanvasEl.width * 0.035);
   let nearestKey = null;
   let nearestDist = Infinity;
@@ -1781,6 +1801,14 @@ function findNearestAsymPointKey(pos) {
       nearestKey = key;
     }
   });
+
+  if (backPhotoState.centerX != null) {
+    const handle = getCenterLineHandlePos();
+    const dist = Math.hypot(handle.x - pos.x, handle.y - pos.y);
+    if (dist < hitRadius && dist < nearestDist) {
+      nearestKey = CENTERLINE_KEY;
+    }
+  }
   return nearestKey;
 }
 
@@ -1788,7 +1816,7 @@ if (backPhotoCanvasEl) {
   backPhotoCanvasEl.addEventListener("pointerdown", (evt) => {
     if (!backPhotoState.points) return;
     const pos = getBackCanvasPoint(evt);
-    const key = findNearestAsymPointKey(pos);
+    const key = findDragTargetKey(pos);
     if (!key) return;
     backPhotoState.dragKey = key;
     backPhotoState.dragFingerPos = pos;
@@ -1804,20 +1832,28 @@ if (backPhotoCanvasEl) {
     pos.y = Math.min(Math.max(pos.y, 0), backPhotoCanvasEl.height);
     backPhotoState.dragFingerPos = pos;
 
-    const lifted = {
-      x: pos.x,
-      y: Math.max(pos.y - getDragLiftOffset(backPhotoCanvasEl), 0),
-    };
-    backPhotoState.points[backPhotoState.dragKey] = lifted;
+    if (backPhotoState.dragKey === CENTERLINE_KEY) {
+      // 縦線は左右にしか動かないので、X座標だけ更新する。
+      backPhotoState.centerX = pos.x;
+    } else {
+      const lifted = {
+        x: pos.x,
+        y: Math.max(pos.y - getDragLiftOffset(backPhotoCanvasEl), 0),
+      };
+      backPhotoState.points[backPhotoState.dragKey] = lifted;
+    }
     redrawBackPhotoCanvas();
     evt.preventDefault();
   });
 
   const endBackDrag = (evt) => {
     if (!backPhotoState.dragKey) return;
+    const wasCenterLine = backPhotoState.dragKey === CENTERLINE_KEY;
     backPhotoState.dragKey = null;
     backPhotoState.dragFingerPos = null;
-    applyAsymmetryMatch();
+    if (!wasCenterLine) {
+      applyAsymmetryMatch();
+    }
     redrawBackPhotoCanvas();
     evt.preventDefault();
   };
