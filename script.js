@@ -235,6 +235,9 @@ const POSTURE_ASSESSMENTS = [
   {
     id: "kyphosis-lordosis",
     label: "カイホロードシス（円背＋反り腰の複合型）",
+    shortLabel: "カイホロードシス",
+    habitHypothesis:
+      "長時間のデスクワークやスマートフォンの使用で、頭が前に出て背中が丸まった姿勢が習慣化している可能性があります。",
     exercises: [
       { name: "チェストオープナー", note: "硬くなった大胸筋をゆるめ、丸まった胸まわりを開く" },
       { name: "ペルビックカール", note: "腹筋・殿筋を使い、骨盤の前傾と反り腰を整える" },
@@ -244,6 +247,9 @@ const POSTURE_ASSESSMENTS = [
   {
     id: "flat-back",
     label: "フラットバック",
+    shortLabel: "フラットバック",
+    habitHypothesis:
+      "骨盤を後ろに倒して座る（背もたれに寄りかかる）姿勢を長時間続けている可能性があります。運動不足により体幹・お尻・もも裏の筋肉が衰えていることも関係しやすい傾向です。",
     exercises: [
       { name: "ハムストリングスストレッチ", note: "硬くなりやすいハムストリングスをゆるめ、骨盤の動きを取り戻す" },
       { name: "ニーストレッチ", note: "弱くなりやすい腸腰筋を働かせ、骨盤を動かす感覚をつくる" },
@@ -253,6 +259,9 @@ const POSTURE_ASSESSMENTS = [
   {
     id: "posture-sway-back",
     label: "スウェイバック",
+    shortLabel: "スウェイバック",
+    habitHypothesis:
+      "骨盤を前に突き出し、お腹の力を抜いて楽に立つ姿勢が習慣化している可能性があります。長時間の立ち仕事や、体幹で支える意識の少なさも関係しやすい傾向です。",
     exercises: [
       { name: "ペルビッククロック", note: "股関節が前に流れた骨盤の位置を、ニュートラルに戻す感覚を養う" },
       { name: "ニーストレッチ", note: "腸腰筋を活性化し、股関節が前に突き出す姿勢を整える" },
@@ -262,6 +271,9 @@ const POSTURE_ASSESSMENTS = [
   {
     id: "forward-head",
     label: "フォワードヘッド（頭部前方位）",
+    shortLabel: "フォワードヘッド",
+    habitHypothesis:
+      "スマートフォンやパソコンの画面を見るときに、頭が前に出る姿勢が習慣化している可能性があります。",
     exercises: [
       { name: "チンタック", note: "深層の頸部屈筋を働かせ、頭の位置を引き戻す" },
       { name: "胸椎伸展ストレッチ", note: "丸まりやすい上部背中を伸ばし、頭が前に出る姿勢を整える" },
@@ -271,6 +283,9 @@ const POSTURE_ASSESSMENTS = [
   {
     id: "rounded-shoulders",
     label: "巻き肩",
+    shortLabel: "巻き肩",
+    habitHypothesis:
+      "長時間のデスクワークや、腕を体の前で使う動作（運転・スマホ操作など）が多いことが関係している可能性があります。",
     exercises: [
       { name: "チェストオープナー", note: "硬くなった大胸筋・小胸筋をゆるめる" },
       { name: "アームサークル（外旋方向）", note: "菱形筋・僧帽筋中部を使い、肩を正しい位置に引き戻す" },
@@ -280,6 +295,9 @@ const POSTURE_ASSESSMENTS = [
   {
     id: "posture-round-back",
     label: "猫背（胸椎後弯・頭部前方位）",
+    shortLabel: "猫背",
+    habitHypothesis:
+      "猫背姿勢での座り作業や、運動不足による背中まわりの筋力低下が習慣化している可能性があります。",
     exercises: [
       { name: "スワン", note: "胸を開き、丸まった背中を伸ばす" },
       { name: "チェストリフト", note: "正しい上体の起こし方を身につけ、猫背の癖を減らす" },
@@ -289,6 +307,9 @@ const POSTURE_ASSESSMENTS = [
   {
     id: "anterior-pelvic-tilt",
     label: "骨盤前傾",
+    shortLabel: "骨盤前傾",
+    habitHypothesis:
+      "反り腰につながりやすい、腰を反らして立つクセや、股関節前面の硬さが関係している可能性があります。",
     exercises: [
       { name: "ペルビックカール", note: "腹筋・殿筋を使い、前に傾いた骨盤を戻す" },
       { name: "腸腰筋ストレッチ", note: "骨盤を前に引っ張る腸腰筋の硬さをゆるめる" },
@@ -298,6 +319,9 @@ const POSTURE_ASSESSMENTS = [
   {
     id: "posterior-pelvic-tilt",
     label: "骨盤後傾",
+    shortLabel: "骨盤後傾",
+    habitHypothesis:
+      "骨盤を後ろに倒して座る・立つクセが習慣化している可能性があります。",
     exercises: [
       { name: "ハムストリングスストレッチ", note: "骨盤を後ろに引っ張るハムストリングスの硬さをゆるめる" },
       { name: "ニーストレッチ", note: "弱くなりやすい腸腰筋を働かせる" },
@@ -572,6 +596,8 @@ const ASYMMETRY_ITEMS = [
   {
     id: "shoulder-asymmetry",
     label: "肩の高さの左右差",
+    habitHypothesis:
+      "カバンをいつも同じ側の肩にかける、利き手側ばかりに重心をかけるなど、左右非対称な体の使い方のクセがある可能性があります。",
     tightMuscles: [{ side: "high", muscle: "僧帽筋上部・肩甲挙筋" }],
     weakMuscles: [
       { side: "low", muscle: "僧帽筋下部・前鋸筋" },
@@ -590,6 +616,8 @@ const ASYMMETRY_ITEMS = [
   {
     id: "pelvis-asymmetry",
     label: "骨盤の高さの左右差",
+    habitHypothesis:
+      "片脚に重心をかけて立つクセ（休めの姿勢）や、脚を組んで座る習慣が関係している可能性があります。",
     tightMuscles: [
       { side: "high", muscle: "腰方形筋（QL）" },
       { side: "high", muscle: "内転筋群", note: "過緊張しやすい" },
@@ -907,6 +935,79 @@ function buildSummary(selectedItems, maxCount = 5) {
     .slice(0, maxCount);
 }
 
+// 左右差の項目を「右肩上がり」のような短い言い方に変換する。
+const ASYMMETRY_SHORT_LABEL = {
+  "shoulder-asymmetry": { left: "左肩上がり", right: "右肩上がり" },
+  "pelvis-asymmetry": { left: "左骨盤上がり", right: "右骨盤上がり" },
+};
+
+// 選ばれている姿勢タイプ・左右差から、考えられる生活習慣・クセを一言でまとめる。
+// 該当する所見がなければ null を返す。
+function buildHabitSummary(checkedPostureIds, asymmetryEntries) {
+  const items = [];
+
+  checkedPostureIds.forEach((id) => {
+    const posture = POSTURE_ASSESSMENTS.find((p) => p.id === id);
+    if (posture && posture.habitHypothesis) {
+      items.push({
+        shortLabel: posture.shortLabel || posture.label,
+        habitHypothesis: posture.habitHypothesis,
+      });
+    }
+  });
+
+  asymmetryEntries.forEach(([id, side]) => {
+    const item = ASYMMETRY_ITEMS.find((a) => a.id === id);
+    if (item && item.habitHypothesis) {
+      items.push({
+        shortLabel: (ASYMMETRY_SHORT_LABEL[id] && ASYMMETRY_SHORT_LABEL[id][side]) || item.label,
+        habitHypothesis: item.habitHypothesis,
+      });
+    }
+  });
+
+  if (items.length === 0) return null;
+
+  const headline = items.map((item) => item.shortLabel).join(" × ");
+  const habitTexts = Array.from(new Set(items.map((item) => item.habitHypothesis)));
+
+  return { headline, habitTexts };
+}
+
+function buildHabitSummaryBlock(habitSummary) {
+  const block = document.createElement("div");
+  block.className = "concern-block habit-block";
+
+  const eyebrow = document.createElement("p");
+  eyebrow.className = "summary-eyebrow";
+  eyebrow.textContent = "Posture Insight";
+  block.appendChild(eyebrow);
+
+  const heading = document.createElement("h3");
+  heading.textContent = "考えられる生活習慣・クセ（予測）";
+  block.appendChild(heading);
+
+  const headlineEl = document.createElement("p");
+  headlineEl.className = "habit-headline";
+  headlineEl.textContent = habitSummary.headline;
+  block.appendChild(headlineEl);
+
+  habitSummary.habitTexts.forEach((text) => {
+    const p = document.createElement("p");
+    p.className = "habit-text";
+    p.textContent = text;
+    block.appendChild(p);
+  });
+
+  const disclaimer = document.createElement("p");
+  disclaimer.className = "helper-text";
+  disclaimer.textContent =
+    "姿勢の所見から考えられる一般的な傾向の予測です。実際の原因はヒアリングと合わせて確認してください。";
+  block.appendChild(disclaimer);
+
+  return block;
+}
+
 function buildSummaryBlock(summaryEntries) {
   const block = document.createElement("div");
   block.className = "concern-block summary-block";
@@ -981,6 +1082,11 @@ formEl.addEventListener("submit", (event) => {
     resultContentEl.appendChild(message);
     resultEl.hidden = false;
     return;
+  }
+
+  const habitSummary = buildHabitSummary(checkedPostureIds, asymmetryEntries);
+  if (habitSummary) {
+    resultContentEl.appendChild(buildHabitSummaryBlock(habitSummary));
   }
 
   const selectedItems = [];
