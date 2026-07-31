@@ -1267,7 +1267,7 @@ function redrawPhotoCanvas() {
   ctx.lineTo(points.ankle.x, height);
   ctx.stroke();
 
-  const dotRadius = Math.max(4, width * 0.01);
+  const dotRadius = Math.max(6, width * 0.013);
   PHOTO_POINT_KEYS.forEach((key) => {
     const p = points[key];
     const isDragging = key === photoState.dragKey;
@@ -1293,12 +1293,20 @@ function redrawPhotoCanvas() {
       ctx.stroke();
     }
 
+    const radius = isDragging ? dotRadius * 1.5 : dotRadius;
+
+    // 写真の色や明るさに関わらず目立つよう、白いハローを敷いてから塗りつぶす。
+    ctx.beginPath();
+    ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+    ctx.arc(p.x, p.y, radius * 1.5, 0, Math.PI * 2);
+    ctx.fill();
+
     ctx.beginPath();
     ctx.fillStyle = PHOTO_MARK_COLOR;
-    ctx.arc(p.x, p.y, isDragging ? dotRadius * 1.6 : dotRadius, 0, Math.PI * 2);
+    ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
     ctx.fill();
     ctx.strokeStyle = "#ffffff";
-    ctx.lineWidth = Math.max(1.5, width * 0.0025);
+    ctx.lineWidth = Math.max(2, width * 0.0035);
     ctx.stroke();
   });
   ctx.restore();
