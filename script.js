@@ -639,6 +639,102 @@ const ASYMMETRY_ITEMS = [
   },
 ];
 
+// 姿勢タイプ・左右差（POSTURE_ASSESSMENTS / ASYMMETRY_ITEMS のid）× 運動経歴（SPORTSのid）で、
+// その姿勢の傾向がそのスポーツにどう影響しやすいか・パフォーマンス向上のために何を整えるとよいかをまとめた一言。
+// 「考えられる生活習慣・クセ（予測）」に運動経歴が組み合わさったときの追加コメントとして使う。
+const SPORT_HABIT_INSIGHTS = {
+  "kyphosis-lordosis": {
+    golf: "胸椎の回旋可動域が不足し、バックスイングが浅くなって腕に頼ったスイングになりやすい状態です。胸を開くケアと体幹の安定強化で、体全体を使った回旋を取り戻しましょう。",
+    soccer: "体幹・殿筋が使いにくく、スプリントやキックのパワーが腰に逃げやすい状態です。腹筋・殿筋を強化し、体幹で骨盤を安定させながら脚を振れるようにしましょう。",
+    tennis: "胸椎の回旋・伸展が不足し、サーブでの体の反りやテイクバックが浅くなりやすい状態です。胸を開く可動域づくりと体幹強化で、パワーを腕だけに頼らないフォームを目指しましょう。",
+    surfing: "反り腰の姿勢がパドリング時の腰への負担を増やしやすい状態です。腹筋・殿筋で骨盤を支えながら、胸椎を使って上体を起こす感覚を養いましょう。",
+    dance: "反り腰と丸まった上背中が同時にあると、体幹の支えが不足したまま上体を反らせる動きになりやすい状態です。腹筋・殿筋を使い、見た目の反りに頼らない体幹コントロールを養いましょう。",
+    running: "腹筋・殿筋の支えが不足し、着地の衝撃や骨盤の安定を腰で受け止めやすい状態です。体幹・殿筋を強化し、腰への負担を減らしたフォームを目指しましょう。",
+    ballet: "胸椎の可動性不足と反り腰が重なると、アラベスクなどの伸展を腰だけで作りやすい状態です。胸椎の可動性と腹筋・殿筋の支えを養い、腰への負担を減らしながら美しいラインを作りましょう。",
+  },
+  "flat-back": {
+    golf: "股関節主導のヒップヒンジが作りにくく、アドレス姿勢や切り返しのパワーが手打ちになりやすい状態です。ハムストリングスをゆるめ、股関節から前傾できるようにして、地面からの力をスイングに伝えましょう。",
+    soccer: "股関節の伸展が制限され、キックの振り出しやスプリントの蹴り出しでパワーが出しにくい状態です。ハムストリングスの柔軟性と腸腰筋の働きを取り戻し、股関節を大きく使えるようにしましょう。",
+    tennis: "股関節から前傾する動きが作りにくく、サーブやストロークで下半身の力を使いきれない状態です。ハムストリングスをゆるめて股関節の動きを取り戻し、下半身主導のパワー伝達を目指しましょう。",
+    surfing: "股関節が動きにくく、テイクオフ時の股関節主導の動作が作りにくい状態です。ハムストリングス・腸腰筋のケアで、股関節から動ける土台を作りましょう。",
+    dance: "骨盤の可動性が乏しく、股関節主導のプリエやアラベスクで骨盤が動かせない状態です。ハムストリングスをゆるめ、骨盤を動かす感覚を取り戻すことでラインの質を高めましょう。",
+    running: "股関節の伸展が使いにくく、後方への蹴り出し（ヒップエクステンション）が浅くなりやすい状態です。ハムストリングス・腸腰筋を整え、ストライドを大きく使えるようにしましょう。",
+    ballet: "骨盤が動きにくいことで、アラベスクなどの股関節伸展を腰に頼りやすい状態です。骨盤の可動性を取り戻し、股関節主導で伸展できるようにしましょう。",
+  },
+  "posture-sway-back": {
+    golf: "体幹で軸を保つ意識が乏しく、スイング中に骨盤が前後に流れやすい状態です。腸腰筋・体幹を働かせ、スイング軸をぶらさずに回旋できるようにしましょう。",
+    soccer: "軸脚の骨盤が前に流れやすく、キックやターンで軸が安定しにくい状態です。腸腰筋と体幹を使い、軸足で骨盤をしっかり支えられるようにしましょう。",
+    tennis: "体幹で支える力が乏しく、切り返しの多いフットワークで骨盤が流れやすい状態です。腸腰筋・体幹の活性化で、素早い切り返しでも軸を保てるようにしましょう。",
+    surfing: "体幹の支えが乏しく、不安定なボード上で骨盤が流れやすい状態です。腸腰筋・体幹を活性化し、バランスを保つ土台を強化しましょう。",
+    dance: "骨盤が前に流れた状態で立つクセがあると、軸足でのバランスが不安定になりやすい状態です。腸腰筋・体幹を働かせ、骨盤をニュートラルに保ったまま動ける感覚を養いましょう。",
+    running: "骨盤が前方に流れた状態での接地は、股関節の効率的な伸展を妨げやすい状態です。腸腰筋・体幹を活性化し、骨盤の位置を安定させたフォームを目指しましょう。",
+    ballet: "骨盤の位置が安定しないと、ルルベやターンでの軸の安定性が乏しくなりやすい状態です。腸腰筋・体幹を働かせ、骨盤をニュートラルに保つ感覚を養いましょう。",
+  },
+  "forward-head": {
+    golf: "頭部が前に出た状態は、アドレスからの視線や回旋軸のブレにつながりやすい状態です。深層の頸部屈筋を働かせ、頭の位置を安定させたスイング軸を作りましょう。",
+    soccer: "首まわりの緊張が呼吸や上半身の力みにつながりやすい状態です。チンタックなどで頭の位置を整え、余分な力みを減らしましょう。",
+    tennis: "頭部が前に出ていると、サーブの上方視野や打点の安定性に影響しやすい状態です。頭の位置を整え、打点を見上げる動作をスムーズにしましょう。",
+    surfing: "パドリング中に頭を上げ続ける姿勢は、頭部前方位をさらに強めやすい状態です。深層の頸部屈筋を働かせ、首への負担を減らしましょう。",
+    dance: "頭部が前に出ていると、上半身のラインや視線の使い方に影響しやすい状態です。頭の位置を整え、首〜肩のラインを美しく保ちましょう。",
+    running: "頭部が前に出た姿勢は、上半身の余分な力みにつながりやすい状態です。頭の位置を整え、リラックスしたフォームを目指しましょう。",
+    ballet: "頭部前方位は、首〜肩のラインの美しさやポール・ド・ブラの動きに影響しやすい状態です。頭の位置を整え、上半身全体のラインを高めましょう。",
+  },
+  "rounded-shoulders": {
+    golf: "肩まわりが内側に入っていると、バックスイングでの胸郭の回旋・肩の可動域が制限されやすい状態です。胸を開き、肩甲骨まわりを使えるようにしてバックスイングの深さを引き出しましょう。",
+    soccer: "上半身の可動性の影響は比較的小さいものの、腕振りの効率が落ちやすい状態です。胸を開き、腕振りをスムーズにしましょう。",
+    tennis: "肩の可動域が制限され、サーブやオーバーヘッドショットで十分なテイクバックが取りにくい状態です。胸を開き、肩甲骨を使った動きを取り戻すことでショットの威力を高めましょう。",
+    surfing: "肩が内側に入っていると、パドリングのリーチや効率が落ちやすい状態です。胸を開き、肩甲骨まわりを使ったパドリングでスピードを高めましょう。",
+    dance: "巻き肩は、ポール・ド・ブラの見た目の美しさや肩の可動域に影響しやすい状態です。胸を開き、肩甲骨まわりを使った上半身の表現力を高めましょう。",
+    running: "腕振りの効率が落ち、ランニングフォーム全体のリズムに影響しやすい状態です。胸を開き、肩甲骨を使ったスムーズな腕振りを目指しましょう。",
+    ballet: "巻き肩は、ポール・ド・ブラや上半身のラインの美しさに影響しやすい状態です。胸を開き、肩甲骨まわりを使った表現力を高めましょう。",
+  },
+  "posture-round-back": {
+    golf: "胸椎が丸まっていると回旋可動域と目線の安定性の両方が制限されやすい状態です。胸を開き、背中の筋力を高めてスイング全体の可動域を引き出しましょう。",
+    soccer: "背中まわりの筋力低下は、体幹を使ったスプリントフォームの安定性に影響しやすい状態です。背中・体幹を強化し、姿勢を保ったまま走れるようにしましょう。",
+    tennis: "猫背姿勢は、サーブでの胸郭の伸展・回旋を制限しやすい状態です。胸を開き、背中の筋力を高めてショットの可動域を広げましょう。",
+    surfing: "丸まった背中は、パドリング時に上体を起こす力を弱めやすい状態です。背中の筋力を高め、効率よくパドリングできるようにしましょう。",
+    dance: "猫背姿勢は、上半身のラインや胸を開いた表現に影響しやすい状態です。背中の筋力を高め、まっすぐで伸びやかなラインを目指しましょう。",
+    running: "背中の筋力低下は、腕振りや上半身の姿勢保持に影響しやすい状態です。背中・体幹を強化し、疲れてもフォームが崩れにくいようにしましょう。",
+    ballet: "猫背姿勢は、ポール・ド・ブラや背筋の伸びやかさに影響しやすい状態です。背中の筋力を高め、美しい上半身のラインを保てるようにしましょう。",
+  },
+  "anterior-pelvic-tilt": {
+    golf: "殿筋が使えず腰を反ってスイングを作りやすい状態です。腹筋・殿筋を働かせ、骨盤を安定させたまま回旋できるようにしましょう。",
+    soccer: "殿筋の力が発揮しにくく、キック・スプリントのパワーが腰に逃げやすい状態です。腹筋・殿筋を強化し、股関節主導のパワー発揮を目指しましょう。",
+    tennis: "骨盤が前傾したままだと体幹の安定性が乏しくなり、ショットの安定性に影響しやすい状態です。腹筋・殿筋を働かせ、骨盤を安定させましょう。",
+    surfing: "腰が反ったまま体幹を使うクセがあると、パドリングやテイクオフで腰に負担がかかりやすい状態です。腹筋・殿筋を強化し、骨盤を安定させましょう。",
+    dance: "骨盤前傾は、ターンアウトや脚を高く上げる動きで腰を反って代償しやすい状態です。腹筋・殿筋を働かせ、骨盤を安定させたまま可動域を引き出しましょう。",
+    running: "殿筋がうまく使えず、蹴り出しのパワーが腰に逃げやすい状態です。腹筋・殿筋を強化し、股関節主導の推進力を高めましょう。",
+    ballet: "骨盤前傾は、アラベスクなどの伸展を腰の反りで代償しやすい状態です。腹筋・殿筋を働かせ、股関節主導の伸展を目指しましょう。",
+  },
+  "posterior-pelvic-tilt": {
+    golf: "骨盤が後傾したままだと、股関節から前傾するアドレス姿勢が作りにくい状態です。骨盤を動かす感覚を取り戻し、股関節主導のヒップヒンジを身につけましょう。",
+    soccer: "骨盤が後傾していると、キックの振り出しで股関節を大きく使いにくい状態です。骨盤を動かす感覚を養い、股関節の可動域を引き出しましょう。",
+    tennis: "骨盤が後傾したままだと、下半身からのパワー伝達が弱くなりやすい状態です。骨盤の動きを取り戻し、下半身主導のショットを目指しましょう。",
+    surfing: "骨盤が後傾していると、テイクオフでの股関節の動きが乏しくなりやすい状態です。骨盤を動かす感覚を養い、股関節主導の動作を引き出しましょう。",
+    dance: "骨盤が後傾していると、股関節主導のプリエやアラベスクの質に影響しやすい状態です。骨盤を動かす感覚を取り戻し、可動域を引き出しましょう。",
+    running: "骨盤が後傾していると、股関節の伸展が浅くなりストライドが縮みやすい状態です。骨盤を動かす感覚を養い、ストライドを引き出しましょう。",
+    ballet: "骨盤が後傾していると、股関節主導の伸展が作りにくい状態です。骨盤を動かす感覚を取り戻し、質の高いラインを目指しましょう。",
+  },
+  "shoulder-asymmetry": {
+    golf: "左右の肩の高さに差があると、スイング軸が左右に傾きやすく、ミート率やスイングの再現性に影響しやすい状態です。左右差を整え、安定したスイング軸を作りましょう。",
+    soccer: "肩の左右差は体幹の回旋バランスに影響し、走行フォームの効率にも関わりやすい状態です。左右均等に肩甲骨を使えるように整えましょう。",
+    tennis: "利き手側の肩が酷使されやすく、左右差がさらに広がりやすい状態です。反対側の筋肉も使い、オーバーユースのリスクを減らしましょう。",
+    surfing: "肩の左右差はパドリングの推進力の左右差につながり、まっすぐ進みにくくなる要因になりやすい状態です。左右差を整え、パドリング効率を高めましょう。",
+    dance: "肩の左右差は、ポール・ド・ブラの見た目の対称性に影響しやすい状態です。左右差を整え、美しい上半身のラインを目指しましょう。",
+    running: "肩の左右差は腕振りのリズムに影響し、体幹の回旋バランスにも関わりやすい状態です。左右差を整え、効率のよい腕振りを目指しましょう。",
+    ballet: "肩の左右差は、ポール・ド・ブラやアラインメントの対称性に影響しやすい状態です。左右差を整え、技術の精度を高めましょう。",
+  },
+  "pelvis-asymmetry": {
+    golf: "骨盤の左右差は、アドレスでの体重配分やスイング軸の安定性に影響しやすい状態です。左右差を整え、地面からの力を均等に使えるようにしましょう。",
+    soccer: "骨盤の左右差は、軸脚での安定性や蹴り脚のパワー伝達に影響しやすい状態です。左右差を整え、どちらの脚でも安定したプレーを目指しましょう。",
+    tennis: "骨盤の左右差はフットワークでの体重移動に影響しやすい状態です。左右差を整え、素早い切り返しでも安定した軸を保ちましょう。",
+    surfing: "骨盤の左右差はテイクオフやボード上でのバランスに影響しやすい状態です。左右差を整え、安定したスタンスを目指しましょう。",
+    dance: "骨盤の左右差は、ターンやアラベスクでの軸の安定性・見た目の対称性に影響しやすい状態です。左右差を整え、技術の精度を高めましょう。",
+    running: "骨盤の左右差は、着地の衝撃吸収や骨盤の左右への揺れに影響しやすい状態です。左右差を整え、効率のよいフォームを目指しましょう。",
+    ballet: "骨盤の左右差は、ターンアウトの左右差やターンの軸の安定性に影響しやすい状態です。左右差を整え、正確なアラインメントを目指しましょう。",
+  },
+};
+
 const GENDERS = [
   { id: "male", label: "男性" },
   { id: "female", label: "女性" },
@@ -942,14 +1038,16 @@ const ASYMMETRY_SHORT_LABEL = {
 };
 
 // 選ばれている姿勢タイプ・左右差から、考えられる生活習慣・クセを一言でまとめる。
+// 運動経歴も選ばれていれば、その組み合わせでスポーツにどう影響しやすいかも追加する。
 // 該当する所見がなければ null を返す。
-function buildHabitSummary(checkedPostureIds, asymmetryEntries) {
+function buildHabitSummary(checkedPostureIds, asymmetryEntries, checkedSportIds = []) {
   const items = [];
 
   checkedPostureIds.forEach((id) => {
     const posture = POSTURE_ASSESSMENTS.find((p) => p.id === id);
     if (posture && posture.habitHypothesis) {
       items.push({
+        id: posture.id,
         shortLabel: posture.shortLabel || posture.label,
         habitHypothesis: posture.habitHypothesis,
       });
@@ -960,6 +1058,7 @@ function buildHabitSummary(checkedPostureIds, asymmetryEntries) {
     const item = ASYMMETRY_ITEMS.find((a) => a.id === id);
     if (item && item.habitHypothesis) {
       items.push({
+        id: item.id,
         shortLabel: (ASYMMETRY_SHORT_LABEL[id] && ASYMMETRY_SHORT_LABEL[id][side]) || item.label,
         habitHypothesis: item.habitHypothesis,
       });
@@ -968,10 +1067,29 @@ function buildHabitSummary(checkedPostureIds, asymmetryEntries) {
 
   if (items.length === 0) return null;
 
-  const headline = items.map((item) => item.shortLabel).join(" × ");
+  const sports = checkedSportIds
+    .map((id) => SPORTS.find((s) => s.id === id))
+    .filter(Boolean);
+
+  const headline = [...items.map((item) => item.shortLabel), ...sports.map((s) => s.label)].join(
+    " × "
+  );
   const habitTexts = Array.from(new Set(items.map((item) => item.habitHypothesis)));
 
-  return { headline, habitTexts };
+  const sportGroups = sports
+    .map((sport) => {
+      const texts = Array.from(
+        new Set(
+          items
+            .map((item) => SPORT_HABIT_INSIGHTS[item.id] && SPORT_HABIT_INSIGHTS[item.id][sport.id])
+            .filter(Boolean)
+        )
+      );
+      return { label: sport.label, texts };
+    })
+    .filter((group) => group.texts.length > 0);
+
+  return { headline, habitTexts, sportGroups };
 }
 
 function buildHabitSummaryBlock(habitSummary) {
@@ -998,6 +1116,29 @@ function buildHabitSummaryBlock(habitSummary) {
     p.textContent = text;
     block.appendChild(p);
   });
+
+  if (habitSummary.sportGroups && habitSummary.sportGroups.length > 0) {
+    const sportHeading = document.createElement("h4");
+    sportHeading.className = "habit-sport-heading";
+    sportHeading.textContent = "スポーツでの影響とパフォーマンスアップのポイント";
+    block.appendChild(sportHeading);
+
+    habitSummary.sportGroups.forEach((group) => {
+      const groupLabel = document.createElement("p");
+      groupLabel.className = "habit-sport-label";
+      groupLabel.textContent = group.label;
+      block.appendChild(groupLabel);
+
+      const list = document.createElement("ul");
+      list.className = "habit-sport-list";
+      group.texts.forEach((text) => {
+        const li = document.createElement("li");
+        li.textContent = text;
+        list.appendChild(li);
+      });
+      block.appendChild(list);
+    });
+  }
 
   const disclaimer = document.createElement("p");
   disclaimer.className = "helper-text";
@@ -1084,7 +1225,7 @@ formEl.addEventListener("submit", (event) => {
     return;
   }
 
-  const habitSummary = buildHabitSummary(checkedPostureIds, asymmetryEntries);
+  const habitSummary = buildHabitSummary(checkedPostureIds, asymmetryEntries, checkedSportIds);
   if (habitSummary) {
     resultContentEl.appendChild(buildHabitSummaryBlock(habitSummary));
   }

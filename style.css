@@ -569,6 +569,36 @@ button[type="submit"]:focus-visible {
   margin-bottom: 0.8rem;
 }
 
+.habit-sport-heading {
+  margin: 0.9rem 0 0.6rem;
+  padding-top: 0.7rem;
+  border-top: 1px solid var(--border);
+  font-size: 0.92rem;
+  font-weight: 700;
+}
+
+.habit-sport-label {
+  margin: 0.7rem 0 0.3rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--accent);
+}
+
+.habit-sport-heading + .habit-sport-label {
+  margin-top: 0;
+}
+
+.habit-sport-list {
+  margin: 0;
+  padding-left: 1.3rem;
+  color: var(--ink);
+}
+
+.habit-sport-list li {
+  margin-bottom: 0.4rem;
+  line-height: 1.6;
+}
+
 .concern-block h3 {
   margin: 0 0 0.6rem;
   font-size: 1rem;
