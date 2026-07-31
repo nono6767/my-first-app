@@ -1596,6 +1596,7 @@ const backPhotoState = {
   imageBitmap: null,
   points: null,
   bodyHeightPx: 1,
+  centerX: null,
   dragKey: null,
   dragFingerPos: null,
 };
@@ -1617,6 +1618,20 @@ function extractAsymmetryPoints(landmarks, width, height) {
 // 2点のうち、写真上でX座標が小さい方＝お客様の左、大きい方＝お客様の右として返す。
 function splitByImageSide(a, b) {
   return a.x <= b.x ? { left: a, right: b } : { left: b, right: a };
+}
+
+// 左右の傾きが見やすいよう、2点を結ぶ線を（同じ傾きのまま）左右に伸ばす。
+function extendLine(left, right, canvasWidth, marginRatio = 0.16) {
+  const dx = right.x - left.x;
+  const dy = right.y - left.y;
+  const len = Math.hypot(dx, dy) || 1;
+  const ux = dx / len;
+  const uy = dy / len;
+  const extend = canvasWidth * marginRatio;
+  return {
+    start: { x: left.x - ux * extend, y: left.y - uy * extend },
+    end: { x: right.x + ux * extend, y: right.y + uy * extend },
+  };
 }
 
 // 左右の高さの差を、体の高さに対する比率として計算する。
@@ -1644,13 +1659,25 @@ function redrawBackPhotoCanvas() {
   ctx.save();
   ctx.strokeStyle = PHOTO_MARK_COLOR;
   ctx.lineWidth = Math.max(2, width * 0.0035);
+
+  // 体の中心の縦線（両くるぶしの中間を通る基準線）。
+  if (backPhotoState.centerX != null) {
+    ctx.beginPath();
+    ctx.moveTo(backPhotoState.centerX, height * 0.02);
+    ctx.lineTo(backPhotoState.centerX, height * 0.98);
+    ctx.stroke();
+  }
+
+  // 肩・骨盤の横線は、傾きが見やすいよう2点の外側まで伸ばして描く。
   [
     [points.shoulderA, points.shoulderB],
     [points.hipA, points.hipB],
   ].forEach(([p1, p2]) => {
+    const { left, right } = splitByImageSide(p1, p2);
+    const { start, end } = extendLine(left, right, width);
     ctx.beginPath();
-    ctx.moveTo(p1.x, p1.y);
-    ctx.lineTo(p2.x, p2.y);
+    ctx.moveTo(start.x, start.y);
+    ctx.lineTo(end.x, end.y);
     ctx.stroke();
   });
 
@@ -1864,10 +1891,16 @@ if (backPhotoInput) {
           finalLandmarks[POSE_LANDMARK.RIGHT_ANKLE].y) *
         0.5 *
         canvas.height;
+      const ankleAvgX =
+        (finalLandmarks[POSE_LANDMARK.LEFT_ANKLE].x +
+          finalLandmarks[POSE_LANDMARK.RIGHT_ANKLE].x) *
+        0.5 *
+        canvas.width;
 
       backPhotoState.imageBitmap = finalBitmap;
       backPhotoState.points = points;
       backPhotoState.bodyHeightPx = Math.max(Math.abs(ankleAvgY - earAvgY), 1);
+      backPhotoState.centerX = ankleAvgX;
 
       redrawBackPhotoCanvas();
       backPhotoPreviewWrapEl.hidden = false;
