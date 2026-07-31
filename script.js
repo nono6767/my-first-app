@@ -1089,11 +1089,15 @@ function loadPoseLandmarker() {
   return poseLandmarkerPromise;
 }
 
+function setStatusMessage(el, text, kind) {
+  if (!el) return;
+  el.hidden = !text;
+  el.textContent = text || "";
+  el.className = "photo-status" + (kind ? ` is-${kind}` : "");
+}
+
 function setPhotoStatus(text, kind) {
-  if (!photoStatusEl) return;
-  photoStatusEl.hidden = !text;
-  photoStatusEl.textContent = text || "";
-  photoStatusEl.className = "photo-status" + (kind ? ` is-${kind}` : "");
+  setStatusMessage(photoStatusEl, text, kind);
 }
 
 // buildPostureDiagram() の座標系（耳y=14〜くるぶしy=130、全体で約116）に合わせて
@@ -1380,8 +1384,8 @@ function findNearestPointKey(pos) {
 }
 
 // ドラッグ中、点を指の実際の位置よりこれだけ上に浮かせて表示する（地図のピンと同じ考え方）。
-function getDragLiftOffset() {
-  return Math.max(48, photoCanvasEl.width * 0.09);
+function getDragLiftOffset(canvas) {
+  return Math.max(48, canvas.width * 0.09);
 }
 
 if (photoCanvasEl) {
@@ -1406,7 +1410,7 @@ if (photoCanvasEl) {
 
     const lifted = {
       x: pos.x,
-      y: Math.max(pos.y - getDragLiftOffset(), 0),
+      y: Math.max(pos.y - getDragLiftOffset(photoCanvasEl), 0),
     };
     photoState.points[photoState.dragKey] = lifted;
     redrawPhotoCanvas();
@@ -1567,6 +1571,311 @@ if (photoInput) {
       console.error(err);
       photoPreviewWrapEl.hidden = true;
       setPhotoStatus(
+        "解析中にエラーが発生しました。通信環境をご確認のうえ、もう一度お試しください。",
+        "error"
+      );
+    }
+  });
+}
+
+// 後ろからの写真による、肩・骨盤の左右差の自動分析。
+// 後ろ姿は正面写真と違って鏡写しにならない（写真の左＝お客様の左）ため、
+// 写真上でX座標が小さい方をそのまま「左」、大きい方を「右」として扱う。
+// MediaPipeの left_shoulder/right_shoulder ラベル自体は、後ろ姿では誤って
+// 判定されることがあるため、ラベルではなく実際の左右の位置関係で決める。
+const backPhotoInput = document.getElementById("back-photo-input");
+const backPhotoStatusEl = document.getElementById("back-photo-status");
+const backPhotoPreviewWrapEl = document.getElementById("back-photo-preview-wrap");
+const backPhotoCanvasEl = document.getElementById("back-photo-canvas");
+
+const ASYM_POINT_KEYS = ["shoulderA", "shoulderB", "hipA", "hipB"];
+// 体の高さに対して、これ未満の左右差は「特に差なし」とみなす。
+const ASYMMETRY_MIN_RATIO = 0.012;
+
+const backPhotoState = {
+  imageBitmap: null,
+  points: null,
+  bodyHeightPx: 1,
+  dragKey: null,
+  dragFingerPos: null,
+};
+
+function setBackPhotoStatus(text, kind) {
+  setStatusMessage(backPhotoStatusEl, text, kind);
+}
+
+function extractAsymmetryPoints(landmarks, width, height) {
+  const toPixels = (lm) => ({ x: lm.x * width, y: lm.y * height });
+  return {
+    shoulderA: toPixels(landmarks[POSE_LANDMARK.LEFT_SHOULDER]),
+    shoulderB: toPixels(landmarks[POSE_LANDMARK.RIGHT_SHOULDER]),
+    hipA: toPixels(landmarks[POSE_LANDMARK.LEFT_HIP]),
+    hipB: toPixels(landmarks[POSE_LANDMARK.RIGHT_HIP]),
+  };
+}
+
+// 2点のうち、写真上でX座標が小さい方＝お客様の左、大きい方＝お客様の右として返す。
+function splitByImageSide(a, b) {
+  return a.x <= b.x ? { left: a, right: b } : { left: b, right: a };
+}
+
+// 左右の高さの差を、体の高さに対する比率として計算する。
+// yが小さいほど画面上で高い位置なので、yが小さい方が「高い側」。
+function computeSideHeightDiff(pointA, pointB, bodyHeightPx) {
+  const { left, right } = splitByImageSide(pointA, pointB);
+  const ratio = Math.abs(left.y - right.y) / bodyHeightPx;
+  if (ratio < ASYMMETRY_MIN_RATIO) return { higherSide: null, ratio };
+  return { higherSide: left.y < right.y ? "left" : "right", ratio };
+}
+
+function redrawBackPhotoCanvas() {
+  if (!backPhotoState.imageBitmap || !backPhotoState.points) return;
+  const canvas = backPhotoCanvasEl;
+  const ctx = canvas.getContext("2d");
+  const width = canvas.width;
+  const height = canvas.height;
+
+  ctx.clearRect(0, 0, width, height);
+  ctx.drawImage(backPhotoState.imageBitmap, 0, 0);
+
+  const points = backPhotoState.points;
+  const dotRadius = Math.max(6, width * 0.013);
+
+  ctx.save();
+  ctx.strokeStyle = PHOTO_MARK_COLOR;
+  ctx.lineWidth = Math.max(2, width * 0.0035);
+  [
+    [points.shoulderA, points.shoulderB],
+    [points.hipA, points.hipB],
+  ].forEach(([p1, p2]) => {
+    ctx.beginPath();
+    ctx.moveTo(p1.x, p1.y);
+    ctx.lineTo(p2.x, p2.y);
+    ctx.stroke();
+  });
+
+  ASYM_POINT_KEYS.forEach((key) => {
+    const p = points[key];
+    const isDragging = key === backPhotoState.dragKey;
+
+    if (isDragging && backPhotoState.dragFingerPos) {
+      ctx.beginPath();
+      ctx.strokeStyle = PHOTO_MARK_COLOR;
+      ctx.lineWidth = Math.max(1.5, width * 0.003);
+      ctx.setLineDash([width * 0.008, width * 0.008]);
+      ctx.moveTo(backPhotoState.dragFingerPos.x, backPhotoState.dragFingerPos.y);
+      ctx.lineTo(p.x, p.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      const crossSize = Math.max(6, width * 0.014);
+      ctx.beginPath();
+      ctx.moveTo(backPhotoState.dragFingerPos.x - crossSize, backPhotoState.dragFingerPos.y);
+      ctx.lineTo(backPhotoState.dragFingerPos.x + crossSize, backPhotoState.dragFingerPos.y);
+      ctx.moveTo(backPhotoState.dragFingerPos.x, backPhotoState.dragFingerPos.y - crossSize);
+      ctx.lineTo(backPhotoState.dragFingerPos.x, backPhotoState.dragFingerPos.y + crossSize);
+      ctx.stroke();
+    }
+
+    const radius = isDragging ? dotRadius * 1.5 : dotRadius;
+    ctx.beginPath();
+    ctx.fillStyle = "rgba(255, 255, 255, 0.9)";
+    ctx.arc(p.x, p.y, radius * 1.5, 0, Math.PI * 2);
+    ctx.fill();
+
+    ctx.beginPath();
+    ctx.fillStyle = PHOTO_MARK_COLOR;
+    ctx.arc(p.x, p.y, radius, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = Math.max(2, width * 0.0035);
+    ctx.stroke();
+  });
+  ctx.restore();
+}
+
+const ASYMMETRY_SIDE_LABEL = { left: "左", right: "右" };
+
+function applyAsymmetryMatch() {
+  const points = backPhotoState.points;
+  const shoulderResult = computeSideHeightDiff(
+    points.shoulderA,
+    points.shoulderB,
+    backPhotoState.bodyHeightPx
+  );
+  const hipResult = computeSideHeightDiff(
+    points.hipA,
+    points.hipB,
+    backPhotoState.bodyHeightPx
+  );
+
+  asymmetrySelections["shoulder-asymmetry"] = shoulderResult.higherSide;
+  asymmetrySelections["pelvis-asymmetry"] = hipResult.higherSide;
+  renderAsymmetryGroup();
+  resultEl.hidden = true;
+
+  const parts = [];
+  parts.push(
+    shoulderResult.higherSide
+      ? `肩は${ASYMMETRY_SIDE_LABEL[shoulderResult.higherSide]}が高い`
+      : "肩は特に左右差なし"
+  );
+  parts.push(
+    hipResult.higherSide
+      ? `骨盤は${ASYMMETRY_SIDE_LABEL[hipResult.higherSide]}が高い`
+      : "骨盤は特に左右差なし"
+  );
+
+  setBackPhotoStatus(
+    `${parts.join("、")}と判定しました。点がずれていればドラッグで調整できます。`,
+    "match"
+  );
+}
+
+function getBackCanvasPoint(evt) {
+  const rect = backPhotoCanvasEl.getBoundingClientRect();
+  const scaleX = backPhotoCanvasEl.width / rect.width;
+  const scaleY = backPhotoCanvasEl.height / rect.height;
+  return {
+    x: (evt.clientX - rect.left) * scaleX,
+    y: (evt.clientY - rect.top) * scaleY,
+  };
+}
+
+function findNearestAsymPointKey(pos) {
+  const hitRadius = Math.max(26, backPhotoCanvasEl.width * 0.035);
+  let nearestKey = null;
+  let nearestDist = Infinity;
+  ASYM_POINT_KEYS.forEach((key) => {
+    const p = backPhotoState.points[key];
+    const dist = Math.hypot(p.x - pos.x, p.y - pos.y);
+    if (dist < hitRadius && dist < nearestDist) {
+      nearestDist = dist;
+      nearestKey = key;
+    }
+  });
+  return nearestKey;
+}
+
+if (backPhotoCanvasEl) {
+  backPhotoCanvasEl.addEventListener("pointerdown", (evt) => {
+    if (!backPhotoState.points) return;
+    const pos = getBackCanvasPoint(evt);
+    const key = findNearestAsymPointKey(pos);
+    if (!key) return;
+    backPhotoState.dragKey = key;
+    backPhotoState.dragFingerPos = pos;
+    backPhotoCanvasEl.setPointerCapture(evt.pointerId);
+    redrawBackPhotoCanvas();
+    evt.preventDefault();
+  });
+
+  backPhotoCanvasEl.addEventListener("pointermove", (evt) => {
+    if (!backPhotoState.dragKey) return;
+    const pos = getBackCanvasPoint(evt);
+    pos.x = Math.min(Math.max(pos.x, 0), backPhotoCanvasEl.width);
+    pos.y = Math.min(Math.max(pos.y, 0), backPhotoCanvasEl.height);
+    backPhotoState.dragFingerPos = pos;
+
+    const lifted = {
+      x: pos.x,
+      y: Math.max(pos.y - getDragLiftOffset(backPhotoCanvasEl), 0),
+    };
+    backPhotoState.points[backPhotoState.dragKey] = lifted;
+    redrawBackPhotoCanvas();
+    evt.preventDefault();
+  });
+
+  const endBackDrag = (evt) => {
+    if (!backPhotoState.dragKey) return;
+    backPhotoState.dragKey = null;
+    backPhotoState.dragFingerPos = null;
+    applyAsymmetryMatch();
+    redrawBackPhotoCanvas();
+    evt.preventDefault();
+  };
+  backPhotoCanvasEl.addEventListener("pointerup", endBackDrag);
+  backPhotoCanvasEl.addEventListener("pointercancel", endBackDrag);
+}
+
+if (backPhotoInput) {
+  backPhotoInput.addEventListener("change", async () => {
+    const file = backPhotoInput.files && backPhotoInput.files[0];
+    if (!file) return;
+
+    backPhotoPreviewWrapEl.hidden = true;
+    backPhotoState.imageBitmap = null;
+    backPhotoState.points = null;
+    setBackPhotoStatus(
+      "解析しています…（初回はAIモデルの読み込みのため時間がかかることがあります）"
+    );
+
+    try {
+      const originalBitmap = await createImageBitmap(file);
+      const roughCanvas = document.createElement("canvas");
+      roughCanvas.width = originalBitmap.width;
+      roughCanvas.height = originalBitmap.height;
+      roughCanvas.getContext("2d").drawImage(originalBitmap, 0, 0);
+
+      const landmarker = await loadPoseLandmarker();
+      const roughResult = landmarker.detect(roughCanvas);
+
+      if (!roughResult.landmarks || roughResult.landmarks.length === 0) {
+        backPhotoPreviewWrapEl.hidden = false;
+        setBackPhotoStatus(
+          "体を検出できませんでした。全身が写った後ろ姿の写真でお試しください。",
+          "error"
+        );
+        return;
+      }
+
+      let finalCanvas = roughCanvas;
+      let finalLandmarks = roughResult.landmarks[0];
+
+      const cropRect = computeCropRect(
+        roughResult.landmarks[0],
+        roughCanvas.width,
+        roughCanvas.height
+      );
+
+      if (cropRect && cropRect.width > 10 && cropRect.height > 10) {
+        setBackPhotoStatus("人物を検出しました。精度を上げるため拡大して再解析しています…");
+        const zoomedCanvas = buildZoomedCanvas(originalBitmap, cropRect);
+        const refinedResult = landmarker.detect(zoomedCanvas);
+        if (refinedResult.landmarks && refinedResult.landmarks.length > 0) {
+          finalCanvas = zoomedCanvas;
+          finalLandmarks = refinedResult.landmarks[0];
+        }
+      }
+
+      const finalBitmap = await createImageBitmap(finalCanvas);
+      const canvas = backPhotoCanvasEl;
+      canvas.width = finalBitmap.width;
+      canvas.height = finalBitmap.height;
+
+      const points = extractAsymmetryPoints(finalLandmarks, canvas.width, canvas.height);
+      const earAvgY =
+        (finalLandmarks[POSE_LANDMARK.LEFT_EAR].y +
+          finalLandmarks[POSE_LANDMARK.RIGHT_EAR].y) *
+        0.5 *
+        canvas.height;
+      const ankleAvgY =
+        (finalLandmarks[POSE_LANDMARK.LEFT_ANKLE].y +
+          finalLandmarks[POSE_LANDMARK.RIGHT_ANKLE].y) *
+        0.5 *
+        canvas.height;
+
+      backPhotoState.imageBitmap = finalBitmap;
+      backPhotoState.points = points;
+      backPhotoState.bodyHeightPx = Math.max(Math.abs(ankleAvgY - earAvgY), 1);
+
+      redrawBackPhotoCanvas();
+      backPhotoPreviewWrapEl.hidden = false;
+      applyAsymmetryMatch();
+    } catch (err) {
+      console.error(err);
+      backPhotoPreviewWrapEl.hidden = true;
+      setBackPhotoStatus(
         "解析中にエラーが発生しました。通信環境をご確認のうえ、もう一度お試しください。",
         "error"
       );

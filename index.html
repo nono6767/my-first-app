@@ -44,6 +44,22 @@
 
         <p class="helper-text">図（横から見たシルエット）の赤い基準線と、耳・肩峰・骨盤・膝・くるぶしの点を参考に、視診・触診で気づいた姿勢のタイプを選んでください。左右差の項目は、高い側を選ぶと使いすぎ・使えていない筋肉とアプローチが表示されます。</p>
         <div id="posture-list" class="posture-grid"></div>
+
+        <div class="photo-analyzer">
+          <label class="photo-upload" for="back-photo-input">
+            <span class="photo-upload-title">後ろからの写真で左右差を自動チェック（任意）</span>
+            <span class="photo-upload-hint">タップして写真を選択・撮影</span>
+            <input type="file" id="back-photo-input" accept="image/*" />
+          </label>
+          <p class="helper-text">
+            後ろ姿（背中側）が全身写った写真を選ぶと、肩と骨盤の左右の高さをAIが自動で比較し、下の「肩の高さの左右差」「骨盤の高さの左右差」に自動でチェックを入れます。後ろ姿は写真の左右がそのままお客様の左右になります。点がずれていれば指でドラッグして調整でき、その場で判定をやり直します。解析は端末内で行われ、写真は送信されません。
+          </p>
+          <p id="back-photo-status" class="photo-status" hidden></p>
+          <div id="back-photo-preview-wrap" class="photo-preview-wrap" hidden>
+            <canvas id="back-photo-canvas" class="photo-canvas"></canvas>
+          </div>
+        </div>
+
         <div id="asymmetry-group" class="asymmetry-group"></div>
       </fieldset>
 
