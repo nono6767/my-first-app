@@ -13,6 +13,30 @@
     <p class="lead">体の特徴・お悩みをタップして選ぶと、対応するおすすめのピラティスエクササイズを表示します。</p>
 
     <form id="concern-form">
+      <fieldset class="safety-fieldset">
+        <legend>安全確認（必ずご確認ください／任意入力）</legend>
+        <p class="helper-text">痛みや医師からの運動制限がある場合は、エクササイズをご提案する前に必ずご確認ください。</p>
+
+        <p class="safety-question">痛みが出るタイミング（複数選択できます）</p>
+        <div id="pain-timing-list" class="chip-grid"></div>
+
+        <p class="safety-question">医師からの運動制限</p>
+        <div id="doctor-restriction-toggle" class="side-toggle"></div>
+        <textarea
+          id="doctor-restriction-detail"
+          class="safety-textarea"
+          placeholder="制限の内容（わかれば入力してください）"
+          hidden
+        ></textarea>
+
+        <p class="safety-question">過去の大きなケガ・手術歴</p>
+        <textarea
+          id="injury-history"
+          class="safety-textarea"
+          placeholder="部位・時期など、わかる範囲で入力してください（任意）"
+        ></textarea>
+      </fieldset>
+
       <fieldset>
         <legend>性別（任意）</legend>
         <p class="helper-text">選ぶと、骨格の傾向に合わせた項目が追加されます。からだの傾向には個人差があります。</p>

@@ -878,6 +878,18 @@ const GENDERS = [
   { id: "female", label: "女性" },
 ];
 
+// 痛みが出るタイミング。複数選択できる（例：運動中も安静時も痛む、など）。
+const PAIN_TIMINGS = [
+  { id: "during-exercise", label: "運動中" },
+  { id: "after-exercise", label: "運動後" },
+  { id: "at-rest", label: "安静時（じっとしていても痛む）" },
+];
+
+const painTimingListEl = document.getElementById("pain-timing-list");
+const doctorRestrictionToggleEl = document.getElementById("doctor-restriction-toggle");
+const doctorRestrictionDetailEl = document.getElementById("doctor-restriction-detail");
+const injuryHistoryEl = document.getElementById("injury-history");
+
 const genderListEl = document.getElementById("gender-list");
 const concernListEl = document.getElementById("concern-list");
 const postureListEl = document.getElementById("posture-list");
@@ -888,6 +900,7 @@ const resultEl = document.getElementById("result");
 const resultContentEl = document.getElementById("result-content");
 
 let selectedGender = null;
+let doctorRestriction = null; // "yes" | "no" | null（未確認）
 const asymmetrySelections = {};
 
 function matchesGender(item, gender) {
@@ -1034,11 +1047,40 @@ function renderAsymmetryGroup() {
   });
 }
 
+function renderPainTimingList() {
+  renderCheckboxList(painTimingListEl, PAIN_TIMINGS, "pain-timing");
+}
+
+function renderDoctorRestrictionToggle() {
+  doctorRestrictionToggleEl.innerHTML = "";
+
+  [
+    { value: "yes", text: "あり" },
+    { value: "no", text: "なし" },
+  ].forEach(({ value, text }) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "side-btn";
+    btn.textContent = text;
+    if (doctorRestriction === value) {
+      btn.classList.add("selected");
+    }
+    btn.addEventListener("click", () => {
+      doctorRestriction = doctorRestriction === value ? null : value;
+      doctorRestrictionDetailEl.hidden = doctorRestriction !== "yes";
+      renderDoctorRestrictionToggle();
+    });
+    doctorRestrictionToggleEl.appendChild(btn);
+  });
+}
+
 renderGenderList();
 renderConcernList();
 renderPostureList();
 renderSportsList();
 renderAsymmetryGroup();
+renderPainTimingList();
+renderDoctorRestrictionToggle();
 
 function buildConcernBlock(item) {
   const block = document.createElement("div");
@@ -1167,6 +1209,76 @@ function buildSummary(selectedItems, maxCount = 5) {
   return Array.from(summary.values())
     .sort((a, b) => b.count - a.count)
     .slice(0, maxCount);
+}
+
+// 痛み・医師の運動制限・ケガ歴のいずれかがあれば、エクササイズ提案の前に確認すべき安全情報としてまとめる。
+// 何も入力・選択されていなければ null を返す。
+function buildSafetyAlert(checkedPainTimingIds, doctorRestriction, doctorRestrictionDetail, injuryHistoryText) {
+  const trimmedInjuryHistory = injuryHistoryText.trim();
+  const trimmedRestrictionDetail = doctorRestrictionDetail.trim();
+  const hasRestriction = doctorRestriction === "yes";
+  const hasInjuryHistory = trimmedInjuryHistory.length > 0;
+
+  if (checkedPainTimingIds.length === 0 && !hasRestriction && !hasInjuryHistory) {
+    return null;
+  }
+
+  return {
+    checkedPainTimingIds,
+    hasRestriction,
+    restrictionDetail: trimmedRestrictionDetail,
+    injuryHistoryText: trimmedInjuryHistory,
+  };
+}
+
+function buildSafetyAlertBlock(safety) {
+  const block = document.createElement("div");
+  block.className = "concern-block safety-alert-block";
+
+  const eyebrow = document.createElement("p");
+  eyebrow.className = "summary-eyebrow safety-eyebrow";
+  eyebrow.textContent = "Safety Check";
+  block.appendChild(eyebrow);
+
+  const heading = document.createElement("h3");
+  heading.textContent = "エクササイズ提案の前に必ずご確認ください";
+  block.appendChild(heading);
+
+  const list = document.createElement("ul");
+  list.className = "safety-alert-list";
+
+  if (safety.checkedPainTimingIds.length > 0) {
+    const labels = safety.checkedPainTimingIds
+      .map((id) => (PAIN_TIMINGS.find((p) => p.id === id) || {}).label)
+      .filter(Boolean);
+    const hasRestPain = safety.checkedPainTimingIds.includes("at-rest");
+    const li = document.createElement("li");
+    li.textContent =
+      `痛みが出るタイミング：${labels.join("・")}。` +
+      (hasRestPain
+        ? "安静時にも痛みがある場合は、運動の実施より先に医師の診断を優先してください。"
+        : "痛みが出る動作は避け、無理のない範囲で行ってください。");
+    list.appendChild(li);
+  }
+
+  if (safety.hasRestriction) {
+    const li = document.createElement("li");
+    li.textContent =
+      "医師から運動制限の指示があります。" +
+      (safety.restrictionDetail ? `（${safety.restrictionDetail}）` : "") +
+      "制限されている動作は行わず、不明な点は医師に確認してください。";
+    list.appendChild(li);
+  }
+
+  if (safety.injuryHistoryText) {
+    const li = document.createElement("li");
+    li.textContent = `過去の大きなケガ・手術歴：${safety.injuryHistoryText}。該当部位に負担のかかる動作は避け、必要に応じて医師・専門家に確認してください。`;
+    list.appendChild(li);
+  }
+
+  block.appendChild(list);
+
+  return block;
 }
 
 // 左右差の項目を「右肩上がり」のような短い言い方に変換する。
@@ -1347,13 +1459,25 @@ formEl.addEventListener("submit", (event) => {
     ([, side]) => side
   );
 
+  const checkedPainTimingIds = Array.from(
+    formEl.querySelectorAll('input[name="pain-timing"]:checked')
+  ).map((input) => input.value);
+
+  const safety = buildSafetyAlert(
+    checkedPainTimingIds,
+    doctorRestriction,
+    doctorRestrictionDetailEl.value,
+    injuryHistoryEl.value
+  );
+
   resultContentEl.innerHTML = "";
 
   if (
     checkedConcernIds.length === 0 &&
     checkedPostureIds.length === 0 &&
     checkedSportIds.length === 0 &&
-    asymmetryEntries.length === 0
+    asymmetryEntries.length === 0 &&
+    !safety
   ) {
     const message = document.createElement("p");
     message.className = "empty-message";
@@ -1361,6 +1485,10 @@ formEl.addEventListener("submit", (event) => {
     resultContentEl.appendChild(message);
     resultEl.hidden = false;
     return;
+  }
+
+  if (safety) {
+    resultContentEl.appendChild(buildSafetyAlertBlock(safety));
   }
 
   const habitSummary = buildHabitSummary(checkedPostureIds, asymmetryEntries, checkedSportIds);
