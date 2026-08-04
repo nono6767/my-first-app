@@ -239,6 +239,11 @@ legend {
   gap: 0.55rem;
 }
 
+.caution-fieldset {
+  border-left: 3px solid var(--danger);
+  padding-left: 1rem;
+}
+
 .chip {
   position: relative;
   display: inline-flex;
@@ -545,6 +550,39 @@ button[type="submit"]:focus-visible {
 .summary-list li::marker {
   color: var(--accent);
   font-weight: 700;
+}
+
+.caution-block {
+  border: 1px solid var(--danger);
+  border-left-width: 5px;
+  border-left-color: var(--danger);
+  background: var(--danger-bg);
+}
+
+.caution-subheading {
+  margin: 0.9rem 0 0.4rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--danger);
+}
+
+.caution-subheading:first-of-type {
+  margin-top: 0.2rem;
+}
+
+.avoid-list {
+  margin: 0;
+  padding-left: 1.1rem;
+  color: var(--ink);
+}
+
+.avoid-list li {
+  margin-bottom: 0.4rem;
+  line-height: 1.55;
+}
+
+.avoid-list li::marker {
+  color: var(--danger);
 }
 
 .habit-block {

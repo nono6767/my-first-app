@@ -873,11 +873,65 @@ const SPORT_HABIT_INSIGHTS = {
   },
 };
 
+// 気になる部位・ケガ歴（該当する部位を選ぶと、避けたい動作と代わりにできる具体的なエクササイズを表示する）。
+// まずは腰・膝・肩の3部位からスタートし、必要に応じて部位を追加できる。
+const CAUTION_AREAS = [
+  {
+    id: "low-back",
+    label: "腰",
+    avoid: [
+      "体幹を安定させないままの深い前屈・後屈（反り腰を強める動き）",
+      "勢いを使った急な回旋動作",
+      "うつ伏せでの強い腰椎伸展（無理な背中の反らし）",
+    ],
+    exercises: [
+      { name: "ペルビックカール", note: "腹筋・殿筋を使い、腰に負担をかけずに骨盤の動きを引き出す" },
+      { name: "アブドミナルカール（頭を軽く起こす程度の可動域で）", note: "腰を反らさずに体幹の安定性を養う" },
+      { name: "ニーストレッチ", note: "股関節を使い、腰椎への負担を減らしながら可動性を引き出す" },
+    ],
+  },
+  {
+    id: "knee",
+    label: "膝",
+    avoid: [
+      "深い膝の屈曲を伴う動作（深いプリエ・正座に近い姿勢）",
+      "膝がねじれる動き（つま先と膝の向きがそろわない状態での荷重）",
+      "片脚に強い衝撃がかかるジャンプ動作",
+    ],
+    exercises: [
+      {
+        name: "サイドキック（膝を伸ばした状態で脚全体を動かす）",
+        note: "膝関節への負担を抑えながら股関節を使う",
+      },
+      {
+        name: "シングルレッグブリッジ（膝の曲げ角度を浅めに）",
+        note: "殿筋・ハムストリングスを使い、膝関節を安定させる",
+      },
+      { name: "レッグサークル（無理のない可動域で）", note: "膝への負担を抑えた安全な範囲で股関節の可動性を保つ" },
+    ],
+  },
+  {
+    id: "shoulder",
+    label: "肩",
+    avoid: [
+      "肩を大きく回す・強く伸ばす動作（無理なオーバーヘッド動作）",
+      "腕で体重を支える動作（プランクなど）",
+      "勢いをつけて重さをかける動作",
+    ],
+    exercises: [
+      { name: "ペルビックカール", note: "肩を使わず、体幹・殿筋だけで行える基本エクササイズ" },
+      { name: "レッグサークル", note: "上半身に負担をかけずに股関節の可動性を引き出す" },
+      { name: "チンタック", note: "肩を動かさずに首・上背部の緊張をゆるめる" },
+    ],
+  },
+];
+
 const GENDERS = [
   { id: "male", label: "男性" },
   { id: "female", label: "女性" },
 ];
 
+const cautionAreaListEl = document.getElementById("caution-area-list");
 const genderListEl = document.getElementById("gender-list");
 const concernListEl = document.getElementById("concern-list");
 const postureListEl = document.getElementById("posture-list");
@@ -1034,11 +1088,16 @@ function renderAsymmetryGroup() {
   });
 }
 
+function renderCautionAreaList() {
+  renderCheckboxList(cautionAreaListEl, CAUTION_AREAS, "caution-area");
+}
+
 renderGenderList();
 renderConcernList();
 renderPostureList();
 renderSportsList();
 renderAsymmetryGroup();
+renderCautionAreaList();
 
 function buildConcernBlock(item) {
   const block = document.createElement("div");
@@ -1065,6 +1124,51 @@ function buildConcernBlock(item) {
       li.appendChild(noteEl);
       list.appendChild(li);
     });
+  block.appendChild(list);
+
+  return block;
+}
+
+function buildCautionBlock(item) {
+  const block = document.createElement("div");
+  block.className = "concern-block caution-block";
+
+  const heading = document.createElement("h3");
+  heading.textContent = `${item.label}に注意`;
+  block.appendChild(heading);
+
+  const avoidHeading = document.createElement("p");
+  avoidHeading.className = "caution-subheading";
+  avoidHeading.textContent = "避けたい動作";
+  block.appendChild(avoidHeading);
+
+  const avoidList = document.createElement("ul");
+  avoidList.className = "avoid-list";
+  item.avoid.forEach((text) => {
+    const li = document.createElement("li");
+    li.textContent = text;
+    avoidList.appendChild(li);
+  });
+  block.appendChild(avoidList);
+
+  const exerciseHeading = document.createElement("p");
+  exerciseHeading.className = "caution-subheading";
+  exerciseHeading.textContent = "代わりにできる具体的エクササイズ";
+  block.appendChild(exerciseHeading);
+
+  const list = document.createElement("ul");
+  item.exercises.forEach((exercise) => {
+    const li = document.createElement("li");
+    const nameEl = document.createElement("span");
+    nameEl.className = "exercise-name";
+    nameEl.textContent = exercise.name;
+    const noteEl = document.createElement("span");
+    noteEl.className = "exercise-note";
+    noteEl.textContent = " — " + exercise.note;
+    li.appendChild(nameEl);
+    li.appendChild(noteEl);
+    list.appendChild(li);
+  });
   block.appendChild(list);
 
   return block;
@@ -1347,13 +1451,18 @@ formEl.addEventListener("submit", (event) => {
     ([, side]) => side
   );
 
+  const checkedCautionAreaIds = Array.from(
+    formEl.querySelectorAll('input[name="caution-area"]:checked')
+  ).map((input) => input.value);
+
   resultContentEl.innerHTML = "";
 
   if (
     checkedConcernIds.length === 0 &&
     checkedPostureIds.length === 0 &&
     checkedSportIds.length === 0 &&
-    asymmetryEntries.length === 0
+    asymmetryEntries.length === 0 &&
+    checkedCautionAreaIds.length === 0
   ) {
     const message = document.createElement("p");
     message.className = "empty-message";
@@ -1361,6 +1470,16 @@ formEl.addEventListener("submit", (event) => {
     resultContentEl.appendChild(message);
     resultEl.hidden = false;
     return;
+  }
+
+  if (checkedCautionAreaIds.length > 0) {
+    resultContentEl.appendChild(buildSectionHeading("気になる部位への注意（安全のため）"));
+    checkedCautionAreaIds.forEach((id) => {
+      const item = CAUTION_AREAS.find((c) => c.id === id);
+      if (item) {
+        resultContentEl.appendChild(buildCautionBlock(item));
+      }
+    });
   }
 
   const habitSummary = buildHabitSummary(checkedPostureIds, asymmetryEntries, checkedSportIds);
