@@ -1057,8 +1057,20 @@ const GENDERS = [
   { id: "female", label: "女性" },
 ];
 
+// 使える器具。エクササイズに `equipment: [...]` が付いていなければ「マット」として扱う
+// （現時点ではすべてのエクササイズがマット想定のため）。他の器具用のバリエーションは
+// 今後 `equipment` を付けて追加していく前提。
+const EQUIPMENT_TYPES = [
+  { id: "mat", label: "マット" },
+  { id: "reformer", label: "リフォーマー" },
+  { id: "cadillac", label: "キャデラック" },
+  { id: "chair", label: "チェア" },
+  { id: "ladder-barrel", label: "ラダーバレル" },
+];
+
 const cautionAreaListEl = document.getElementById("caution-area-list");
 const genderListEl = document.getElementById("gender-list");
+const equipmentListEl = document.getElementById("equipment-list");
 const concernListEl = document.getElementById("concern-list");
 const postureListEl = document.getElementById("posture-list");
 const sportsListEl = document.getElementById("sports-list");
@@ -1072,6 +1084,14 @@ const asymmetrySelections = {};
 
 function matchesGender(item, gender) {
   return !item.genders || (gender && item.genders.includes(gender));
+}
+
+// 器具を1つも選んでいなければ絞り込みなし（すべて表示）。
+// エクササイズに equipment が付いていなければ「マット」として扱う。
+function matchesEquipment(exercise, checkedEquipmentIds) {
+  if (checkedEquipmentIds.length === 0) return true;
+  const exerciseEquipment = exercise.equipment || ["mat"];
+  return exerciseEquipment.some((id) => checkedEquipmentIds.includes(id));
 }
 
 function renderGenderList() {
@@ -1218,14 +1238,27 @@ function renderCautionAreaList() {
   renderCheckboxList(cautionAreaListEl, CAUTION_AREAS, "caution-area");
 }
 
+function renderEquipmentList() {
+  renderCheckboxList(equipmentListEl, EQUIPMENT_TYPES, "equipment");
+}
+
 renderGenderList();
+renderEquipmentList();
 renderConcernList();
 renderPostureList();
 renderSportsList();
 renderAsymmetryGroup();
 renderCautionAreaList();
 
-function buildConcernBlock(item) {
+// 器具の絞り込みで該当エクササイズが0件になったときに表示する案内文。
+function buildNoEquipmentMatchNote() {
+  const note = document.createElement("p");
+  note.className = "helper-text";
+  note.textContent = "選んだ器具に対応するエクササイズはまだ登録されていません。";
+  return note;
+}
+
+function buildConcernBlock(item, checkedEquipmentIds = []) {
   const block = document.createElement("div");
   block.className = "concern-block";
 
@@ -1233,29 +1266,36 @@ function buildConcernBlock(item) {
   heading.textContent = item.label;
   block.appendChild(heading);
 
-  const list = document.createElement("ul");
-  item.exercises
+  const matchedExercises = item.exercises
     .filter((exercise) => matchesGender(exercise, selectedGender))
-    .forEach((exercise) => {
-      const li = document.createElement("li");
-      const nameEl = document.createElement("span");
-      nameEl.className = "exercise-name";
-      nameEl.textContent = exercise.tag
-        ? `［${exercise.tag}］${exercise.name}`
-        : exercise.name;
-      const noteEl = document.createElement("span");
-      noteEl.className = "exercise-note";
-      noteEl.textContent = " — " + exercise.note;
-      li.appendChild(nameEl);
-      li.appendChild(noteEl);
-      list.appendChild(li);
-    });
+    .filter((exercise) => matchesEquipment(exercise, checkedEquipmentIds));
+
+  if (matchedExercises.length === 0) {
+    block.appendChild(buildNoEquipmentMatchNote());
+    return block;
+  }
+
+  const list = document.createElement("ul");
+  matchedExercises.forEach((exercise) => {
+    const li = document.createElement("li");
+    const nameEl = document.createElement("span");
+    nameEl.className = "exercise-name";
+    nameEl.textContent = exercise.tag
+      ? `［${exercise.tag}］${exercise.name}`
+      : exercise.name;
+    const noteEl = document.createElement("span");
+    noteEl.className = "exercise-note";
+    noteEl.textContent = " — " + exercise.note;
+    li.appendChild(nameEl);
+    li.appendChild(noteEl);
+    list.appendChild(li);
+  });
   block.appendChild(list);
 
   return block;
 }
 
-function buildCautionBlock(item) {
+function buildCautionBlock(item, checkedEquipmentIds = []) {
   const block = document.createElement("div");
   block.className = "concern-block caution-block";
 
@@ -1289,8 +1329,17 @@ function buildCautionBlock(item) {
   exerciseHeading.textContent = "代わりにできる具体的エクササイズ";
   block.appendChild(exerciseHeading);
 
+  const matchedExercises = item.exercises.filter((exercise) =>
+    matchesEquipment(exercise, checkedEquipmentIds)
+  );
+
+  if (matchedExercises.length === 0) {
+    block.appendChild(buildNoEquipmentMatchNote());
+    return block;
+  }
+
   const list = document.createElement("ul");
-  item.exercises.forEach((exercise) => {
+  matchedExercises.forEach((exercise) => {
     const li = document.createElement("li");
     const nameEl = document.createElement("span");
     nameEl.className = "exercise-name";
@@ -1330,7 +1379,7 @@ function buildMuscleRow(tagClass, tagText, entry, higherSide) {
   return row;
 }
 
-function buildAsymmetryBlock(item, higherSide) {
+function buildAsymmetryBlock(item, higherSide, checkedEquipmentIds = []) {
   const higherLabel = sideLabelFor("high", higherSide);
   const lowerLabel = sideLabelFor("low", higherSide);
 
@@ -1353,8 +1402,17 @@ function buildAsymmetryBlock(item, higherSide) {
     );
   });
 
+  const matchedExercises = item.exercises.filter((exercise) =>
+    matchesEquipment(exercise, checkedEquipmentIds)
+  );
+
+  if (matchedExercises.length === 0) {
+    block.appendChild(buildNoEquipmentMatchNote());
+    return block;
+  }
+
   const list = document.createElement("ul");
-  item.exercises.forEach((exercise) => {
+  matchedExercises.forEach((exercise) => {
     const sideLabel =
       exercise.side === "both"
         ? "両側"
@@ -1588,6 +1646,10 @@ formEl.addEventListener("submit", (event) => {
     formEl.querySelectorAll('input[name="caution-area"]:checked')
   ).map((input) => input.value);
 
+  const checkedEquipmentIds = Array.from(
+    formEl.querySelectorAll('input[name="equipment"]:checked')
+  ).map((input) => input.value);
+
   resultContentEl.innerHTML = "";
 
   if (
@@ -1610,7 +1672,7 @@ formEl.addEventListener("submit", (event) => {
     checkedCautionAreaIds.forEach((id) => {
       const item = CAUTION_AREAS.find((c) => c.id === id);
       if (item) {
-        resultContentEl.appendChild(buildCautionBlock(item));
+        resultContentEl.appendChild(buildCautionBlock(item, checkedEquipmentIds));
       }
     });
   }
@@ -1627,12 +1689,12 @@ formEl.addEventListener("submit", (event) => {
     checkedConcernIds.forEach((id) => {
       const concern = CONCERNS.find((c) => c.id === id);
       if (!concern) return;
-      resultContentEl.appendChild(buildConcernBlock(concern));
+      resultContentEl.appendChild(buildConcernBlock(concern, checkedEquipmentIds));
       selectedItems.push({
         label: concern.label,
-        exercises: concern.exercises.filter((exercise) =>
-          matchesGender(exercise, selectedGender)
-        ),
+        exercises: concern.exercises
+          .filter((exercise) => matchesGender(exercise, selectedGender))
+          .filter((exercise) => matchesEquipment(exercise, checkedEquipmentIds)),
       });
     });
   }
@@ -1644,17 +1706,24 @@ formEl.addEventListener("submit", (event) => {
     checkedPostureIds.forEach((id) => {
       const posture = POSTURE_ASSESSMENTS.find((p) => p.id === id);
       if (!posture) return;
-      resultContentEl.appendChild(buildConcernBlock(posture));
-      selectedItems.push({ label: posture.label, exercises: posture.exercises });
+      resultContentEl.appendChild(buildConcernBlock(posture, checkedEquipmentIds));
+      selectedItems.push({
+        label: posture.label,
+        exercises: posture.exercises.filter((exercise) =>
+          matchesEquipment(exercise, checkedEquipmentIds)
+        ),
+      });
     });
     asymmetryEntries.forEach(([id, side]) => {
       const item = ASYMMETRY_ITEMS.find((a) => a.id === id);
       if (!item) return;
-      resultContentEl.appendChild(buildAsymmetryBlock(item, side));
+      resultContentEl.appendChild(buildAsymmetryBlock(item, side, checkedEquipmentIds));
       const higherLabel = sideLabelFor("high", side);
       selectedItems.push({
         label: `${item.label}（${higherLabel}が高い）`,
-        exercises: item.exercises,
+        exercises: item.exercises.filter((exercise) =>
+          matchesEquipment(exercise, checkedEquipmentIds)
+        ),
       });
     });
   }
@@ -1666,8 +1735,13 @@ formEl.addEventListener("submit", (event) => {
     checkedSportIds.forEach((id) => {
       const sport = SPORTS.find((s) => s.id === id);
       if (!sport) return;
-      resultContentEl.appendChild(buildConcernBlock(sport));
-      selectedItems.push({ label: sport.label, exercises: sport.exercises });
+      resultContentEl.appendChild(buildConcernBlock(sport, checkedEquipmentIds));
+      selectedItems.push({
+        label: sport.label,
+        exercises: sport.exercises.filter((exercise) =>
+          matchesEquipment(exercise, checkedEquipmentIds)
+        ),
+      });
     });
   }
 
