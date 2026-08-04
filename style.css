@@ -239,42 +239,6 @@ legend {
   gap: 0.55rem;
 }
 
-.safety-fieldset {
-  border-left: 3px solid var(--danger);
-  padding-left: 1rem;
-}
-
-.safety-question {
-  margin: 0.9rem 0 0.5rem;
-  font-size: 0.9rem;
-  font-weight: 600;
-  color: var(--ink);
-}
-
-.safety-question:first-of-type {
-  margin-top: 0;
-}
-
-.safety-textarea {
-  width: 100%;
-  max-width: 480px;
-  min-height: 3.4rem;
-  padding: 0.7rem 0.85rem;
-  border: 1px solid var(--border);
-  border-radius: 10px;
-  background: var(--surface);
-  color: var(--ink);
-  font: inherit;
-  font-size: 0.9rem;
-  resize: vertical;
-  box-sizing: border-box;
-}
-
-.safety-textarea:focus-visible {
-  outline: 2px solid var(--accent);
-  outline-offset: 1px;
-}
-
 .chip {
   position: relative;
   display: inline-flex;
@@ -580,33 +544,6 @@ button[type="submit"]:focus-visible {
 
 .summary-list li::marker {
   color: var(--accent);
-  font-weight: 700;
-}
-
-.safety-alert-block {
-  border: 1px solid var(--danger);
-  border-left-width: 5px;
-  border-left-color: var(--danger);
-  background: var(--danger-bg);
-}
-
-.safety-eyebrow {
-  color: var(--danger);
-}
-
-.safety-alert-list {
-  margin: 0;
-  padding-left: 1.3rem;
-  color: var(--ink);
-}
-
-.safety-alert-list li {
-  margin-bottom: 0.5rem;
-  line-height: 1.6;
-}
-
-.safety-alert-list li::marker {
-  color: var(--danger);
   font-weight: 700;
 }
 
