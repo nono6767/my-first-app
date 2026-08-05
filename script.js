@@ -263,6 +263,21 @@ const POSTURE_ASSESSMENTS = [
         note: "胸椎の可動性を引き出し、背骨全体のバランスを整える",
         equipment: ["reformer"],
       },
+      {
+        name: "マーメイド",
+        note: "胸椎の側屈・回旋の可動性を引き出しながら、体幹の左右差を整える",
+        equipment: ["reformer"],
+      },
+      {
+        name: "エレファント",
+        note: "ハムストリングスをゆるめながら、体幹全体で姿勢を支える感覚を養う",
+        equipment: ["reformer"],
+      },
+      {
+        name: "ショートスパイン（浅い可動域で）",
+        note: "骨盤の動きと体幹の連動を、無理のない範囲で引き出す",
+        equipment: ["reformer"],
+      },
     ],
   },
   {
@@ -296,6 +311,21 @@ const POSTURE_ASSESSMENTS = [
         note: "平坦になった腰椎のカーブを取り戻す",
         equipment: ["reformer"],
       },
+      {
+        name: "ニーストレッチ（フラット、浅めの可動域で）",
+        note: "骨盤をニュートラルに近づけながら股関節の動きを引き出す",
+        equipment: ["reformer"],
+      },
+      {
+        name: "マーメイド",
+        note: "体幹側面の柔軟性を高めながら、姿勢の意識づけを行う",
+        equipment: ["reformer"],
+      },
+      {
+        name: "フットワーク（ヒール）",
+        note: "股関節伸展の感覚を養いながら、骨盤の安定を保つ",
+        equipment: ["reformer"],
+      },
     ],
   },
   {
@@ -324,6 +354,21 @@ const POSTURE_ASSESSMENTS = [
       {
         name: "ペルビックリフト",
         note: "体幹を使い、耳・肩・骨盤・くるぶしのラインを揃える練習をする",
+        equipment: ["reformer"],
+      },
+      {
+        name: "ハンドレッド（両脚をテーブルトップで）",
+        note: "腹斜筋群を働かせながら、骨盤の位置を安定させる",
+        equipment: ["reformer"],
+      },
+      {
+        name: "ショートスパイン（浅い可動域で）",
+        note: "骨盤を後傾させすぎないよう注意しながら、股関節の連動を引き出す",
+        equipment: ["reformer"],
+      },
+      {
+        name: "サイドツイスト（座位）",
+        note: "腹斜筋群を使い、体幹の回旋コントロールを養う",
         equipment: ["reformer"],
       },
     ],
